@@ -46,8 +46,15 @@ def analizar_y_evaluar_piso(piso):
     # Descartar pisos altos sin ascensor
     piso_planta = piso.get("floor", 0)
     tiene_ascensor = piso.get("hasLift", True)
-    if not tiene_ascensor and piso_planta > 1:
-        return None  # Sin ascensor solo aceptamos bajo o 1º
+
+try:
+    planta_num = int(piso_planta)
+except (ValueError, TypeError):
+    planta_num = 0
+
+if not tiene_ascensor and planta_num > 1:
+
+return None  # Sin ascensor solo aceptamos bajo o 1º
         
     # 2. Desglose de compra e hipoteca
     gastos_compra = precio * IMPUESTOS_GASTOS_PCT
