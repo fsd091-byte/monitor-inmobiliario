@@ -54,6 +54,7 @@ except (ValueError, TypeError):
 
 if not tiene_ascensor and planta_num > 1:
 
+
 return None  # Sin ascensor solo aceptamos bajo o 1º
         
     # 2. Desglose de compra e hipoteca
