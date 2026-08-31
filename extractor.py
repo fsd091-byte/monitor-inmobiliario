@@ -1,8 +1,6 @@
 import os
 from apify_client import ApifyClient
 
--- APIFY_TOKEN = os.getenv("APIFY_TOKEN", "apify_api_6JbgA1BwCpYtCHuObJKo678pkCmKx02UN2QV")
-
 APIFY_TOKEN = os.getenv("APIFY_TOKEN", "")
 
 def obtener_pisos_idealista():
