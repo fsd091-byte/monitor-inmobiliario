@@ -78,7 +78,7 @@ def es_propiedad_valida(item):
     # 1. Filtro de precio
     precio = item.get("price")
     if isinstance(precio, (int, float)):
-        if not (100000 <= precio <= 275000):
+        if not (50000 <= precio <= 175000):
             print(f"  └─ Descartado ID {piso_id}: Precio fuera de rango ({precio}€)")
             return False
 
