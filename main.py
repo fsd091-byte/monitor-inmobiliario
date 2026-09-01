@@ -29,10 +29,13 @@ TARGET_LOCATIONS = [
     "madrid"
 ]
 
+# Lista de barrios o zonas a excluir (en minúsculas y sin tildes para simplificar)
 EXCLUDED_NEIGHBORHOODS = [
-    "san cristóbal", "san cristobal",
-    "la cañada real", "cañada real",
-    "el pozo del tío raimundo", "el pozo"
+    "san cristobal",
+    "la canada real", "canada real",
+    "el pozo del tio raimundo", "pozo del tio raimundo",
+    "entrrevias", "entrevias"
+    "villaverde","villaverde"
 ]
 
 EXCLUDE_KEYWORDS = [
@@ -41,16 +44,25 @@ EXCLUDE_KEYWORDS = [
     "inversor", "alquilado", "local", "loft", "estudio industrial", "nave"
 ]
 
+import unicodedata
+
+def quitar_tildes(texto):
+    if not texto:
+        return ""
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', str(texto))
+        if unicodedata.category(c) != 'Mn'
+    ).lower()
+
 def procesar_inmueble(item):
     precio = item.get("price")
     planta = str(item.get("floor", "")).lower()
     tiene_ascensor = item.get("hasLift", False)
-    zona = str(item.get("zone", "")).lower()
-    title = str(item.get("title", "")).lower()
-    description = str(item.get("description", "")).lower()
-    full_text = f"{title} {description} {zona}"
+    
+    # Unificamos todo el texto del inmueble (título, descripción, zona y URL) sin tildes
+    texto_completo = quitar_tildes(f"{item.get('title', '')} {item.get('description', '')} {item.get('zone', '')} {item.get('url', '')}")
 
-    # 1. Filtro de precio
+    # 1. Filtro de precio (50k - 175k)
     if isinstance(precio, (int, float)):
         if not (50000 <= precio <= 175000):
             return False, f"Precio fuera de rango ({precio}€)"
@@ -63,18 +75,20 @@ def procesar_inmueble(item):
 
     # 3. Filtro de barrios excluidos (ej. San Cristóbal)
     for barrio in EXCLUDED_NEIGHBORHOODS:
-        if barrio in zona:
-            return False, f"Barrio excluido por riesgo ({barrio.title()})"
+        if barrio in texto_completo:
+            return False, f"Barrio excluido por riesgo ('{barrio}')"
 
-    # 4. Filtro de palabras clave (okupas, subastas, etc.)
-    for kw in EXCLUDE_KEYWORDS:
-        if kw in full_text:
-            return False, f"Aviso de riesgo/okupación ('{kw}')"
+    # 4. Filtro de palabras clave de riesgo (okupas, subastas, etc.)
+    if 'EXCLUDE_KEYWORDS' in globals():
+        for kw in EXCLUDE_KEYWORDS:
+            if quitar_tildes(kw) in texto_completo:
+                return False, f"Aviso de riesgo/okupación ('{kw}')"
 
     # 5. Filtro de ubicación objetivo
     if 'TARGET_LOCATIONS' in globals() and TARGET_LOCATIONS:
-        if zona != "madrid":
-            coincide = any(loc.lower() in zona for loc in TARGET_LOCATIONS)
+        zona_limpia = quitar_tildes(item.get('zone', ''))
+        if zona_limpia != "madrid":
+            coincide = any(quitar_tildes(loc) in zona_limpia for loc in TARGET_LOCATIONS)
             if not coincide:
                 return False, f"Zona '{item.get('zone')}' no coincide con TARGET_LOCATIONS"
 
