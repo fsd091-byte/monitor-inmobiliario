@@ -59,7 +59,7 @@ def obtener_pisos_idealista():
     """
     print("📁 [MODO OFFLINE] Leyendo inmuebles desde 'pisos_prueba.json'...")
     try:
-        with open("C:/Users/fernando.sanchez/Documents/IA Fernando/pisos_prueba.json", "r", encoding="utf-8") as f:
+        with open("pisos_prueba.json", "r", encoding="utf-8") as f:
             pisos = json.load(f)
             print(f"✓ {len(pisos)} pisos cargados correctamente para pruebas.")
             return pisos
