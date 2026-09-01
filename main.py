@@ -194,6 +194,52 @@ def ejecutar_proceso():
     print(f" Total inmuebles filtrados listos para notificar: {len(inmuebles_aceptados)}")
     print("="*80 + "\n")
 
+def ejecutar_proceso():
+    # 1. Cargar base de datos e inmuebles desde Apify
+    db = GestorDB()  # O como se llame tu instancia/clase de base de datos
+    resultados_apify = obtener_pisos_idealista()  # Ajusta el nombre si tu función se llama diferente
+
+    inmuebles_aceptados = []
+
+    print("\n" + "="*80)
+    print(" 📋 INMUEBLES SELECCIONADOS QUE CUMPLEN TODOS LOS CRITERIOS")
+    print("="*80)
+
+    for item in resultados_apify:
+        es_valido, motivo = procesar_inmueble(item)
+        
+        if es_valido:
+            item_id = str(item.get("id") or item.get("propertyCode") or "")
+            
+            # Comprobar en la BD si ya se notificó anteriormente
+            if db.existe(item_id):
+                continue
+
+            inmuebles_aceptados.append(item)
+            
+            # Formateo de atributos para el log limpio
+            precio = item.get("price", 0)
+            superficie = item.get("size") or item.get("builtArea") or item.get("sizeM2") or 0
+            habitaciones = item.get("rooms") or item.get("roomsCount") or item.get("bedrooms", 0)
+            planta = item.get("floor", "N/A")
+            ascensor = "Con ascensor" if item.get("hasLift") else "Sin ascensor"
+            zona = item.get("zone") or item.get("municipality") or "Madrid"
+            url = item.get("url") or item.get("link") or "Sin URL"
+
+            # Imprime 1 sola línea por piso aceptado en la consola
+            print(f"🏠 ID: {item_id} | {precio:,.0f}€ | {superficie} m² | {habitaciones} habs | Planta: {planta} ({ascensor}) | Zona: {zona} | Link: {url}")
+
+            # 2. Enviar notificación por Telegram y guardar en BD
+            try:
+                enviar_notificacion_telegram(item)  # Ajusta al nombre de tu función de Telegram
+                db.guardar(item_id)
+            except Exception as e:
+                print(f"⚠️ Error enviando notificación para ID {item_id}: {e}")
+
+    print("="*80)
+    print(f" Total inmuebles nuevos notificados: {len(inmuebles_aceptados)}")
+    print("="*80 + "\n")
+
 
 if __name__ == "__main__":
     ejecutar_proceso()
