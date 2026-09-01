@@ -62,64 +62,65 @@ def quitar_tildes(texto):
 
 
 def procesar_inmueble(item):
+    item_id = item.get("id") or item.get("propertyCode") or "Sin-ID"
     precio = item.get("price")
     planta = str(item.get("floor", "")).lower()
     tiene_ascensor = item.get("hasLift", False)
     
-    # Extracción flexible de habitaciones y metros cuadrados
     habitaciones = item.get("rooms") or item.get("roomsCount") or item.get("bedrooms", 0)
     superficie = item.get("size") or item.get("builtArea") or item.get("sizeM2") or item.get("surface", 0)
+    zona = item.get("zone") or item.get("municipality") or "Madrid"
 
-    # Texto completo para escaneo de riesgo y zonas
-    texto_completo_json = quitar_tildes(str(item))
+    # Convertimos todo el objeto JSON a texto plano limpio para escaneo exhaustivo
+    texto_completo = quitar_tildes(str(item))
 
-    # 1. Filtro de precio (50k - 175k)
+    # 1. Filtro de precio
     if isinstance(precio, (int, float)):
-        if not (50000 <= precio <= 175000):
-            return False, f"Precio fuera de rango ({precio}€)"
+        if not (PRECIO_MIN <= precio <= PRECIO_MAX):
+            return False, f"❌ {item_id} | {precio}€ | {superficie}m² | {habitaciones}hab | {zona} -> Precio fuera de rango"
     else:
-        return False, "Precio no disponible"
+        return False, f"❌ {item_id} | Sin precio | {zona} -> Precio no disponible"
 
-    # 2. Filtro de superficie mínima (mínimo 45 m²)
+    # 2. Filtro de superficie mínima
     try:
         superficie_val = float(superficie) if superficie is not None else 0
         if superficie_val < SUPERFICIE_MIN:
-            return False, f"Superficie insuficiente ({superficie_val} m² < {SUPERFICIE_MIN} m²)"
-    except (ValueError, TypeError):
-        pass  # Si no viene la superficie, no descartamos directamente por esto salvo que prefieras ser estricto
-
-    # 3. Filtro de habitaciones (mínimo 2)
-    try:
-        hab_val = int(habitaciones) if habitaciones is not None else 0
-        if hab_val < HABITACIONES_MIN:
-            return False, f"Habitaciones insuficientes ({hab_val} < {HABITACIONES_MIN})"
+            return False, f"❌ {item_id} | {precio}€ | {superficie_val}m² | {habitaciones}hab | {zona} -> Superficie < {SUPERFICIE_MIN}m²"
     except (ValueError, TypeError):
         pass
 
-    # 4. Filtro de ascensor (plantas 2ª o superiores)
+    # 3. Filtro de habitaciones mínimas
+    try:
+        hab_val = int(habitaciones) if habitaciones is not None else 0
+        if hab_val < HABITACIONES_MIN:
+            return False, f"❌ {item_id} | {precio}€ | {superficie}m² | {hab_val}hab | {zona} -> Habitaciones < {HABITACIONES_MIN}"
+    except (ValueError, TypeError):
+        pass
+
+    # 4. Filtro de ascensor (2ª planta o superior)
     if planta.isdigit() and int(planta) >= 2 and not tiene_ascensor:
-        return False, f"Planta {planta}ª sin ascensor"
+        return False, f"❌ {item_id} | {precio}€ | Planta {planta} | {zona} -> Planta alta sin ascensor"
 
-    # 5. Filtro de barrios excluidos por riesgo
+    # 5. Filtro de barrios excluidos
     for barrio in EXCLUDED_NEIGHBORHOODS:
-        if barrio in texto_completo_json:
-            return False, f"Barrio excluido por riesgo ('{barrio}')"
+        if barrio in texto_completo:
+            return False, f"❌ {item_id} | {precio}€ | {zona} -> Barrio excluido ('{barrio}')"
 
-    # 6. Filtro de palabras clave de riesgo
-    if 'EXCLUDE_KEYWORDS' in globals():
-        for kw in EXCLUDE_KEYWORDS:
-            if quitar_tildes(kw) in texto_completo_json:
-                return False, f"Aviso de riesgo/okupación ('{kw}')"
+    # 6. Filtro de palabras clave (nuda propiedad, okupas, subastas, etc.)
+    for kw in EXCLUDE_KEYWORDS:
+        if kw in texto_completo:
+            return False, f"❌ {item_id} | {precio}€ | {zona} -> Término prohibido ('{kw}')"
 
     # 7. Filtro de ubicación objetivo
     if 'TARGET_LOCATIONS' in globals() and TARGET_LOCATIONS:
-        zona_limpia = quitar_tildes(item.get('zone', ''))
+        zona_limpia = quitar_tildes(zona)
         if zona_limpia != "madrid":
             coincide = any(quitar_tildes(loc) in zona_limpia for loc in TARGET_LOCATIONS)
             if not coincide:
-                return False, f"Zona '{item.get('zone')}' no coincide con TARGET_LOCATIONS"
+                return False, f"❌ {item_id} | {precio}€ | {zona} -> Zona no objetivo"
 
-    return True, "Cumple todos los filtros"
+    return True, f"✅ {item_id} | {precio}€ | {superficie}m² | {habitaciones}hab | {zona} -> ACEPTADO"
+    
     
 
 def es_propiedad_valida(item):
