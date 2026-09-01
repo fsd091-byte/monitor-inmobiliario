@@ -24,56 +24,43 @@ EXCLUDE_KEYWORDS = [
 
 
 def es_propiedad_valida(item):
-    # 1. Filtro de tipo de propiedad
+    # 1. Filtro de tipo de propiedad (acepta variaciones en ingles y espanol)
     prop_type = str(item.get("propertyType", "")).lower()
-    if prop_type and prop_type not in ["flat", "penthouse", "duplex", "piso", "atico", "ático"]:
-        # print(f"Descartado tipo: {prop_type}")
+    if prop_type and prop_type not in ["flat", "penthouse", "duplex", "atico", "ático", "homes"]:
         return False
 
-    # 2. Filtro de precio
+    # 2. Filtro de precio (convierte texto a número si es necesario)
     price = item.get("price")
     if isinstance(price, str):
-        price = float(price.replace(".", "").replace("€", "").strip())
+        try:
+            price = float(price.replace(".", "").replace("€", "").strip())
+        except ValueError:
+            price = None
+            
     if price and not (100000 <= price <= 275000):
-        # print(f"Descartado precio: {price}")
         return False
 
-    # 3. Filtro de habitaciones
-    rooms = item.get("rooms", 0)
-    if rooms and rooms < 1:
-        return False
-
-    # 4. Filtro de ascensor (si es piso >= 2)
-    floor = item.get("floor", "")
-    has_lift = item.get("hasLift", False)
-    try:
-        floor_num = int(floor)
-        if floor_num >= 2 and not has_lift:
-            return False
-    except (ValueError, TypeError):
-        pass
-
-    # 5. Palabras clave a excluir
+    # 3. Palabras clave a excluir
     title = str(item.get("title", "")).lower()
     description = str(item.get("description", "")).lower()
     full_text = f"{title} {description}"
 
-    for kw in EXCLUDE_KEYWORDS:
-        if kw in full_text:
-            return False
+    if hasattr(config, 'EXCLUDE_KEYWORDS'):
+        for kw in config.EXCLUDE_KEYWORDS:
+            if kw.lower() in full_text:
+                return False
 
-    # 6. Comprobación de ubicación (permite coincidencias parciales)
-    location_text = f"{item.get('municipality', '')} {item.get('address', '')} {item.get('locationName', '')}".lower()
-    
-    # Si tenemos lista de municipios, comprobar si alguno está contenido en el texto de ubicación
-    if TARGET_LOCATIONS:
-        match = any(loc.lower() in location_text for loc in TARGET_LOCATIONS)
+    # 4. Comprobación flexible de ubicación
+    if hasattr(config, 'TARGET_LOCATIONS') and config.TARGET_LOCATIONS:
+        # Construye un texto general con todos los campos de ubicacion que manda Apify
+        location_text = f"{item.get('municipality', '')} {item.get('address', '')} {item.get('locationName', '')} {item.get('district', '')}".lower()
+        
+        # Comprueba si algun municipio objetivo esta contenido en la cadena
+        match = any(loc.lower() in location_text for loc in config.TARGET_LOCATIONS)
         if not match:
-            # print(f"Descartado ubicacion: {location_text}")
             return False
 
     return True
-
 
 
 def ejecutar_proceso():
