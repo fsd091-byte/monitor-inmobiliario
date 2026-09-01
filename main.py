@@ -1,7 +1,7 @@
 import os
 import requests
 import sqlite3
-from extractor import obtener_inmuebles_apify  # O el nombre de tu funcion en extractor.py
+from extractor import obtener_pisos_idealista # O el nombre de tu funcion en extractor.py
 from notificador import enviar_telegram      # O el nombre de tu funcion en notificador.py
 import gestor_db
 
