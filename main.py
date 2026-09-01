@@ -70,7 +70,14 @@ def procesar_inmueble(item):
     superficie = item.get("size") or item.get("builtArea") or item.get("sizeM2") or item.get("surface", 0)
     zona = item.get("zone") or item.get("municipality") or "Madrid"
 
-    texto_completo = quitar_tildes(str(item))
+    # Capturamos también campos específicos donde suelen venir etiquetas o estados
+    status = str(item.get("status", ""))
+    tags = str(item.get("tags", ""))
+    property_type = str(item.get("propertyType", ""))
+    sub_type = str(item.get("subType", ""))
+    
+    # Texto completo ampliado que incluye todo el JSON + campos clave
+    texto_completo = quitar_tildes(f"{str(item)} {status} {tags} {property_type} {sub_type}")
 
     # 1. Filtro de precio (50k - 175k)
     if isinstance(precio, (int, float)):
@@ -106,7 +113,7 @@ def procesar_inmueble(item):
 
     # 6. Filtro de palabras clave (nuda propiedad, okupas, subastas, etc.)
     for kw in EXCLUDE_KEYWORDS:
-        if kw in texto_completo:
+        if quitar_tildes(kw) in texto_completo:
             return False, f"Término prohibido ({kw})"
 
     # 7. Ubicación objetivo
