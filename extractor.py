@@ -7,12 +7,12 @@ def obtener_pisos_idealista():
     client = ApifyClient(APIFY_TOKEN)
     
     run_input = {
-        "location": "Madrid",
+        # "location": "Madrid",
         "operation": "sale",
         "propertyType": "homes",
-        "minPrice": "100000",
-        "maxPrice": "275000",
-        "maxItems": 200
+        "minPrice": "50000",
+        "maxPrice": "175000",
+        "maxItems": 100
     }
 
     print("🔍 Conectando con Apify para buscar inmuebles en Madrid...")
