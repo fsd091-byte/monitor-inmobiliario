@@ -45,11 +45,14 @@ def procesar_inmueble(item):
     precio = item.get("price")
     planta = str(item.get("floor", "")).lower()
     tiene_ascensor = item.get("hasLift", False)
-    zona = item.get("zone", "")
+    zona = str(item.get("zone", "")).lower()
+    title = str(item.get("title", "")).lower()
+    description = str(item.get("description", "")).lower()
+    full_text = f"{title} {description} {zona}"
 
     # 1. Filtro de precio
     if isinstance(precio, (int, float)):
-        if not (100000 <= precio <= 275000):
+        if not (50000 <= precio <= 175000):
             return False, f"Precio fuera de rango ({precio}€)"
     else:
         return False, "Precio no disponible"
@@ -58,22 +61,22 @@ def procesar_inmueble(item):
     if planta.isdigit() and int(planta) >= 2 and not tiene_ascensor:
         return False, f"Planta {planta}ª sin ascensor"
 
-    # 3. Palabras clave excluidas
-    title = str(item.get("title", "")).lower()
-    description = str(item.get("description", "")).lower()
-    full_text = f"{title} {description}"
+    # 3. Filtro de barrios excluidos (ej. San Cristóbal)
+    for barrio in EXCLUDED_NEIGHBORHOODS:
+        if barrio in zona:
+            return False, f"Barrio excluido por riesgo ({barrio.title()})"
 
-    if 'EXCLUDE_KEYWORDS' in globals() and EXCLUDE_KEYWORDS:
-        for kw in EXCLUDE_KEYWORDS:
-            if kw.lower() in full_text:
-                return False, f"Palabra excluida '{kw}'"
+    # 4. Filtro de palabras clave (okupas, subastas, etc.)
+    for kw in EXCLUDE_KEYWORDS:
+        if kw in full_text:
+            return False, f"Aviso de riesgo/okupación ('{kw}')"
 
-    # 4. Filtro de ubicación
+    # 5. Filtro de ubicación objetivo
     if 'TARGET_LOCATIONS' in globals() and TARGET_LOCATIONS:
-        zona_lower = str(zona).lower()
-        coincide = any(loc.lower() in zona_lower for loc in TARGET_LOCATIONS)
-        if not coincide:
-            return False, f"Zona '{zona}' no coincide con TARGET_LOCATIONS"
+        if zona != "madrid":
+            coincide = any(loc.lower() in zona for loc in TARGET_LOCATIONS)
+            if not coincide:
+                return False, f"Zona '{item.get('zone')}' no coincide con TARGET_LOCATIONS"
 
     return True, "Cumple todos los filtros"
 
