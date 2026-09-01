@@ -163,7 +163,7 @@ def es_propiedad_valida(item):
 
 def ejecutar_proceso():
 
-    resultados_apify = obtener_inmuebles_apify()  # Usa el nombre exacto de tu función de Apify
+    resultados_apify = obtener_pisos_idealista()  # Usa el nombre exacto de tu función de Apify
     
     inmuebles_aceptados = []
 
