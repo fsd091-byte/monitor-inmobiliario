@@ -196,7 +196,7 @@ def ejecutar_proceso():
 
 def ejecutar_proceso():
     # 1. Cargar base de datos e inmuebles desde Apify
-    db = GestorDB()  # O como se llame tu instancia/clase de base de datos
+    db = gestor_db()  # O como se llame tu instancia/clase de base de datos
     resultados_apify = obtener_pisos_idealista()  # Ajusta el nombre si tu función se llama diferente
 
     inmuebles_aceptados = []
