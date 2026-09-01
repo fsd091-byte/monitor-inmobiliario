@@ -25,32 +25,38 @@ EXCLUDE_KEYWORDS = [
 
 
 def es_propiedad_valida(item):
-    # 1. Tipo de propiedad (evalúa la clave 'title')
-    tipo = str(item.get("title", "")).lower().strip()
-    tipos_validos = ["flat", "piso", "penthouse", "duplex", "atico", "ático", "house", "chalet"]
-    if tipo and tipo not in tipos_validos:
-        return False
-
-    # 2. Rango de precio (100k - 275k)
+    # 1. Filtro de precio (100k - 275k)
     precio = item.get("price")
     if isinstance(precio, (int, float)):
         if not (100000 <= precio <= 275000):
             return False
 
-    # 3. Filtro de ascensor para plantas 2ª o superiores
+    # 2. Filtro de ascensor para plantas 2ª o superiores
     planta = str(item.get("floor", "")).lower()
     tiene_ascensor = item.get("hasLift", False)
     if planta.isdigit() and int(planta) >= 2 and not tiene_ascensor:
         return False
 
-    # 4. Ubicación (evalúa la clave 'zone')
+    # 3. Palabras clave a excluir
+    title = str(item.get("title", "")).lower()
+    description = str(item.get("description", "")).lower()
+    full_text = f"{title} {description}"
+
+    if 'EXCLUDE_KEYWORDS' in globals() and EXCLUDE_KEYWORDS:
+        for kw in EXCLUDE_KEYWORDS:
+            if kw.lower() in full_text:
+                return False
+
+    # 4. Filtro de ubicación flexible (evalúa 'zone' u otros campos)
     if 'TARGET_LOCATIONS' in globals() and TARGET_LOCATIONS:
-        zona = str(item.get("zone", "")).lower()
-        coincide = any(loc.lower() in zona for loc in TARGET_LOCATIONS)
-        if not coincide:
-            return False
+        zona = str(item.get("zone") or item.get("municipality") or "").lower()
+        if zona:
+            coincide = any(loc.lower() in zona for loc in TARGET_LOCATIONS)
+            if not coincide:
+                return False
 
     return True
+
 
 
 def ejecutar_proceso():
