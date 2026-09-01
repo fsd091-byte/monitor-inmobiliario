@@ -29,6 +29,12 @@ TARGET_LOCATIONS = [
     "madrid"
 ]
 
+EXCLUDED_NEIGHBORHOODS = [
+    "san cristóbal", "san cristobal",
+    "la cañada real", "cañada real",
+    "el pozo del tío raimundo", "el pozo"
+]
+
 EXCLUDE_KEYWORDS = [
     "ocupado", "okupa", "okupado", "sin posesion", "sin posesión", 
     "nuda propiedad", "subasta", "cesion de remate", "cesión de remate",
