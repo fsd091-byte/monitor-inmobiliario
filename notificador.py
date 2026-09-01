@@ -12,7 +12,7 @@ def enviar_alerta_piso(piso_analizado):
     
     mensaje = (
         f"🎯 *¡OPORTUNIDAD INMOBILIARIA DETECTADA!*\n\n"
-        f"📍 *Zona:* {piso_analizado['zona']}\n"
+        f"📍 *Zona:* {piso_analizado.get('zone') or piso_analizado.get('zona') or 'No especificada'}\n"
         f"🏠 *Título:* {piso_analizado['titulo']}\n"
         f"📐 *Tamaño:* {piso_analizado['size']} m² | {piso_analizado['habitaciones']} hab.\n\n"
         f"💰 *Precio Venta:* {piso_analizado['precio']:,} €\n"
