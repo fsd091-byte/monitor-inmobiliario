@@ -6,6 +6,7 @@ from notificador import enviar_alerta_piso      # O el nombre de tu funcion en n
 import extractor
 import notificador
 import gestor_db
+import json
 
 print("--- INICIANDO MONITOR INMOBILIARIO ---")
 
@@ -69,24 +70,24 @@ def ejecutar_proceso():
     print(f"Obtenidos {len(inmuebles)} inmuebles en total.")
 ###
 
-    import json
-
 def ejecutar_proceso():
     print("Buscando ofertas en Apify...")
     inmuebles = extractor.obtener_pisos_idealista()
     print(f"Obtenidos {len(inmuebles)} inmuebles en total.")
 
-    # IMPRIMIR EL PRIMER ANUNCIO PARA VER SUS CAMPOS REALES
-    if inmuebles:
-        print("--- ESTRUCTURA DEL PRIMER INMUEBLE ---")
-        print(json.dumps(inmuebles[0], indent=2, ensure_ascii=False))
-        print("--------------------------------------")
-
     # Resto de tu bucle...
     
     validos = 0
     for item in inmuebles:
+        
+        # IMPRIMIR EL PRIMER ANUNCIO PARA VER SUS CAMPOS REALES
+        print("--- ESTRUCTURA DEL PRIMER INMUEBLE ---")
+        print(json.dumps(inmuebles[0], indent=2, ensure_ascii=False))
+        print("--------------------------------------")
+        
         # Imprime la ubicacion detectada para ver como viene de Apify
+
+        
         muni = item.get("municipality") or item.get("locationName") or item.get("address")
         precio = item.get("price")
         
