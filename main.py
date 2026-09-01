@@ -147,6 +147,17 @@ def ejecutar_proceso():
     print("="*80)
 
     for item in resultados_apify:
+
+        # CHIVATO TEMPORAL: Si es el piso de la nuda propiedad, imprimimos su JSON exacto en consola
+        item_id_actual = str(item.get("id") or item.get("propertyCode") or "")
+        if item_id_actual == "11219507":
+            print(f"\n--- INSPECCIONANDO PISO 11219507 ---")
+            print(json.dumps(item, indent=2, ensure_ascii=False))
+            print("------------------------------------\n")
+        # FIN CHIVATO
+        
+        es_valido, motivo = procesar_inmueble(item)
+        
         es_valido, motivo = procesar_inmueble(item)
         
         if es_valido:
