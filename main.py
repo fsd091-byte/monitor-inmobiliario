@@ -11,10 +11,22 @@ import json
 print("--- INICIANDO MONITOR INMOBILIARIO ---")
 
 TARGET_LOCATIONS = [
-    "Fuenlabrada", "Getafe", "Móstoles", "Alcorcón", "Pinto", "Parla",
-    "San Fernando de Henares", "Coslada", "Torrejón de Ardoz", 
-    "Alcalá de Henares", "Ajalvir", "Loeches", "Meco",
-    "Azuqueca de Henares", "Alovera", "Guadalajara"
+    # Corredor del Henares y Guadalajara
+    "alcalá de henares", "alcala de henares",
+    "torrejón de ardoz", "torrejon de ardoz",
+    "coslada", "san fernando de henares",
+    "rivas", "rivas-vaciamadrid",
+    "guadalajara", "azuqueca", "azuqueca de henares",
+    
+    # Sur de Madrid
+    "getafe", "móstoles", "mostoles", 
+    "fuenlabrada", "alcorcón", "alcorcon", "leganés", "leganes",
+    
+    # Capitales de provincia cercanas
+    "ávila", "avila",
+    
+    # Valor general de la provincia devuelto por Apify
+    "madrid"
 ]
 
 EXCLUDE_KEYWORDS = [
