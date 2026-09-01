@@ -24,9 +24,9 @@ EXCLUDE_KEYWORDS = [
 
 
 def es_propiedad_valida(item):
-    # 1. Filtro de tipo de propiedad (acepta variaciones en ingles y espanol)
+    # 1. Filtro de tipo de propiedad
     prop_type = str(item.get("propertyType", "")).lower()
-    if prop_type and prop_type not in ["flat", "penthouse", "duplex", "atico", "ático", "homes"]:
+    if prop_type and prop_type not in ["flat", "penthouse", "duplex", "piso", "atico", "ático", "homes"]:
         return False
 
     # 2. Filtro de precio (convierte texto a número si es necesario)
@@ -45,18 +45,15 @@ def es_propiedad_valida(item):
     description = str(item.get("description", "")).lower()
     full_text = f"{title} {description}"
 
-    if hasattr(config, 'EXCLUDE_KEYWORDS'):
-        for kw in config.EXCLUDE_KEYWORDS:
+    if 'EXCLUDE_KEYWORDS' in globals():
+        for kw in EXCLUDE_KEYWORDS:
             if kw.lower() in full_text:
                 return False
 
     # 4. Comprobación flexible de ubicación
-    if hasattr(config, 'TARGET_LOCATIONS') and config.TARGET_LOCATIONS:
-        # Construye un texto general con todos los campos de ubicacion que manda Apify
+    if 'TARGET_LOCATIONS' in globals() and TARGET_LOCATIONS:
         location_text = f"{item.get('municipality', '')} {item.get('address', '')} {item.get('locationName', '')} {item.get('district', '')}".lower()
-        
-        # Comprueba si algun municipio objetivo esta contenido en la cadena
-        match = any(loc.lower() in location_text for loc in config.TARGET_LOCATIONS)
+        match = any(loc.lower() in location_text for loc in TARGET_LOCATIONS)
         if not match:
             return False
 
