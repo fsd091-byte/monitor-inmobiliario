@@ -64,7 +64,6 @@ def quitar_tildes(texto):
 
 
 def procesar_inmueble(item):
-    item_id = item.get("id") or item.get("propertyCode") or "Sin-ID"
     precio = item.get("price")
     planta = str(item.get("floor", "")).lower()
     tiene_ascensor = item.get("hasLift", False)
@@ -73,55 +72,54 @@ def procesar_inmueble(item):
     superficie = item.get("size") or item.get("builtArea") or item.get("sizeM2") or item.get("surface", 0)
     zona = item.get("zone") or item.get("municipality") or "Madrid"
 
-    # Convertimos todo el objeto JSON a texto plano limpio para escaneo exhaustivo
     texto_completo = quitar_tildes(str(item))
 
-    # 1. Filtro de precio
+    # 1. Filtro de precio (50k - 175k)
     if isinstance(precio, (int, float)):
         if not (PRECIO_MIN <= precio <= PRECIO_MAX):
-            return False, f"❌ {item_id} | {precio}€ | {superficie}m² | {habitaciones}hab | {zona} -> Precio fuera de rango"
+            return False, "Precio fuera de rango"
     else:
-        return False, f"❌ {item_id} | Sin precio | {zona} -> Precio no disponible"
+        return False, "Precio no disponible"
 
-    # 2. Filtro de superficie mínima
+    # 2. Filtro de superficie mínima (45 m²)
     try:
         superficie_val = float(superficie) if superficie is not None else 0
         if superficie_val < SUPERFICIE_MIN:
-            return False, f"❌ {item_id} | {precio}€ | {superficie_val}m² | {habitaciones}hab | {zona} -> Superficie < {SUPERFICIE_MIN}m²"
+            return False, "Superficie insuficiente"
     except (ValueError, TypeError):
         pass
 
-    # 3. Filtro de habitaciones mínimas
+    # 3. Filtro de habitaciones (mínimo 2)
     try:
         hab_val = int(habitaciones) if habitaciones is not None else 0
         if hab_val < HABITACIONES_MIN:
-            return False, f"❌ {item_id} | {precio}€ | {superficie}m² | {hab_val}hab | {zona} -> Habitaciones < {HABITACIONES_MIN}"
+            return False, "Habitaciones insuficientes"
     except (ValueError, TypeError):
         pass
 
-    # 4. Filtro de ascensor (2ª planta o superior)
+    # 4. Filtro de ascensor (plantas 2ª o superiores)
     if planta.isdigit() and int(planta) >= 2 and not tiene_ascensor:
-        return False, f"❌ {item_id} | {precio}€ | Planta {planta} | {zona} -> Planta alta sin ascensor"
+        return False, "Planta alta sin ascensor"
 
     # 5. Filtro de barrios excluidos
     for barrio in EXCLUDED_NEIGHBORHOODS:
         if barrio in texto_completo:
-            return False, f"❌ {item_id} | {precio}€ | {zona} -> Barrio excluido ('{barrio}')"
+            return False, f"Barrio excluido ({barrio})"
 
     # 6. Filtro de palabras clave (nuda propiedad, okupas, subastas, etc.)
     for kw in EXCLUDE_KEYWORDS:
         if kw in texto_completo:
-            return False, f"❌ {item_id} | {precio}€ | {zona} -> Término prohibido ('{kw}')"
+            return False, f"Término prohibido ({kw})"
 
-    # 7. Filtro de ubicación objetivo
+    # 7. Ubicación objetivo
     if 'TARGET_LOCATIONS' in globals() and TARGET_LOCATIONS:
         zona_limpia = quitar_tildes(zona)
         if zona_limpia != "madrid":
             coincide = any(quitar_tildes(loc) in zona_limpia for loc in TARGET_LOCATIONS)
             if not coincide:
-                return False, f"❌ {item_id} | {precio}€ | {zona} -> Zona no objetivo"
+                return False, "Zona no objetivo"
 
-    return True, f"✅ {item_id} | {precio}€ | {superficie}m² | {habitaciones}hab | {zona} -> ACEPTADO"
+    return True, "Cumple filtros"
     
     
 
@@ -164,35 +162,35 @@ def es_propiedad_valida(item):
     return True
 
 def ejecutar_proceso():
-    print("--- INICIANDO MONITOR INMOBILIARIO ---")
-    inmuebles = extractor.obtener_pisos_idealista()
-    print(f"Obtenidos {len(inmuebles)} inmuebles en total.\n")
 
-    validos = 0
-    for item in inmuebles:
-        piso_id = item.get("id") or item.get("url")
+    inmuebles_aceptados = []
+
+    print("\n" + "="*80)
+    print(" 📋 INMUEBLES SELECCIONADOS QUE CUMPLEN TODOS LOS CRITERIOS")
+    print("="*80)
+
+    for item in resultados_apify:
         es_valido, motivo = procesar_inmueble(item)
         
         if es_valido:
-            validos += 1
-            if not gestor_db.ya_fue_visto(piso_id):
-                try:
-                    notificador.enviar_alerta_piso(item)
-                    print(f"✓ Alerta enviada a tu Telegram con éxito para ID {piso_id}.")
-                except Exception as e:
-                    print(f"   └─ ⚠️ Error al enviar Telegram: {e}")
-                
-                # Envolver la persistencia en DB para evitar que falle el script
-                try:
-                    gestor_db.guardar_visto(piso_id)
-                except Exception as e:
-                    print(f"   └─ ⚠️ Error al guardar en la BD ({piso_id}): {e}")
-            else:
-                print(f"ℹ️ El inmueble {piso_id} ya fue notificado previamente.")
-        else:
-            print(f"❌ DESCARTADO {piso_id}: {motivo}")
+            inmuebles_aceptados.append(item)
+            
+            # Extraemos atributos clave para el log limpio
+            item_id = item.get("id") or item.get("propertyCode") or "Sin-ID"
+            precio = item.get("price", 0)
+            superficie = item.get("size") or item.get("builtArea") or item.get("sizeM2") or 0
+            habitaciones = item.get("rooms") or item.get("roomsCount") or item.get("bedrooms", 0)
+            planta = item.get("floor", "N/A")
+            ascensor = "Con ascensor" if item.get("hasLift") else "Sin ascensor"
+            zona = item.get("zone") or item.get("municipality") or "Madrid"
+            url = item.get("url") or item.get("link") or "Sin URL"
 
-    print(f"\n--- RESUMEN: {validos} de {len(inmuebles)} inmuebles pasaron los filtros ---")
+            # Imprime 1 sola línea por piso aceptado
+            print(f"🏠 ID: {item_id} | {precio:,.0f}€ | {superficie} m² | {habitaciones} habs | Planta: {planta} ({ascensor}) | Zona: {zona} | Link: {url}")
+
+    print("="*80)
+    print(f" Total inmuebles filtrados listos para notificar: {len(inmuebles_aceptados)}")
+    print("="*80 + "\n")
 
 
 if __name__ == "__main__":
