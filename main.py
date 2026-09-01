@@ -1,99 +1,75 @@
 import os
 import requests
-from extractor import obtener_pisos_idealista
+import sqlite3
 
-# Configuración de variables de entorno (Secrets de GitHub)
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
+# --- LISTA DE MUNICIPIOS OBJETIVO ---
+TARGET_LOCATIONS = [
+    # Sur / Suroeste de Madrid
+    "Fuenlabrada", "Getafe", "Móstoles", "Alcorcón", "Pinto", "Parla",
+    # Corredor del Henares (Madrid)
+    "San Fernando de Henares", "Coslada", "Torrejón de Ardoz", 
+    "Alcalá de Henares", "Ajalvir", "Loeches", "Meco",
+    # Corredor del Henares / Guadalajara
+    "Azuqueca de Henares", "Alovera", "Guadalajara"
+]
 
-def enviar_mensaje_telegram(mensaje):
-    """Envia una notificacion por mensaje de Telegram."""
-    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
-        print("⚠️ Advertencia: No se han configurado las credenciales de Telegram.")
-        return
+# --- PALABRAS CLAVE A EXCLUIR EN TÍTULO / DESCRIPCIÓN ---
+EXCLUDE_KEYWORDS = [
+    "ocupado", "okupa", "okupado", "sin posesion", "sin posesión", 
+    "nuda propiedad", "subasta", "cesion de remate", "cesión de remate",
+    "inversor", "alquilado", "local", "loft", "estudio industrial", "nave"
+]
 
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    payload = {
-        "chat_id": TELEGRAM_CHAT_ID,
-        "text": mensaje,
-        "parse_mode": "HTML"
-    }
+def es_propiedad_valida(item):
+    """Aplica las reglas de filtrado sobre cada inmueble encontrado."""
     
-    try:
-        response = requests.post(url, json=payload)
-        response.raise_for_status()
-        print("✅ Notificación enviada a Telegram con éxito.")
-    except Exception as e:
-        print(f"❌ Error al enviar mensaje a Telegram: {e}")
+    # 1. Filtro de Tipo de Propiedad (Solo Pisos)
+    property_type = item.get("propertyType", "").lower()
+    if property_type not in ["flat", "penthouse", "duplex"]:
+        return False
 
-def analizar_y_evaluar_piso(piso):
-    """Analiza las características del inmueble y determina si es una oportunidad."""
-    precio = piso.get("price", 0)
-    superficie = piso.get("size", 0)
-    piso_planta = piso.get("floor", "0")
-    tiene_ascensor = piso.get("hasLift", False)
+    # 2. Filtro de Precio (entre 100.000 € y 175.000 €)
+    price = item.get("price", 0)
+    if not (100000 <= price <= 175000):
+        return False
+
+    # 3. Filtro de Habitaciones (mínimo 1)
+    rooms = item.get("rooms", 0)
+    if rooms < 1:
+        return False
+
+    # 4. Filtro de Ascensor (Obligatorio a partir de 2ª planta; opcional en Bajo/1º)
+    floor = item.get("floor", "")
+    has_lift = item.get("hasLift", False)
     
-    # Conversión segura de planta a int
+    # Si la planta es numérica (2º o superior) y no tiene ascensor, se descarta
     try:
-        planta_num = int(piso_planta)
-    except (ValueError, TypeError):
-        planta_num = 0
+        floor_num = int(floor)
+        if floor_num >= 2 and not has_lift:
+            return False
+    except ValueError:
+        # En el caso de "bj" (bajo), "en" (entreplanta), "st" (sótano) o "1", no exige ascensor
+        pass
 
-    # Conversión segura de precio y superficie
-    try:
-        precio_num = float(precio)
-    except (ValueError, TypeError):
-        precio_num = 0.0
+    # 5. Filtro de Exclusión de Palabras Clave (Ocupados, Nuda Propiedad, Locales, etc.)
+    title = item.get("title", "").lower()
+    description = item.get("description", "").lower()
+    full_text = f"{title} {description}"
 
-    try:
-        superficie_num = float(superficie)
-    except (ValueError, TypeError):
-        superficie_num = 0.0
+    for kw in EXCLUDE_KEYWORDS:
+        if kw in full_text:
+            return False
 
-    # Descartar pisos altos sin ascensor (Sin ascensor solo aceptamos bajo o 1º)
-    if not tiene_ascensor and planta_num > 1:
-        return False, "Piso alto sin ascensor"
+    # 6. Filtro de Ubicación
+    municipality = item.get("municipality", "")
+    if municipality not in TARGET_LOCATIONS:
+        # Si la API devuelve la ubicación en 'address' o 'town'
+        address = item.get("address", "")
+        if not any(loc.lower() in address.lower() or loc.lower() in municipality.lower() for loc in TARGET_LOCATIONS):
+            return False
 
-    # Cálculo de precio por metro cuadrado
-    if superficie_num > 0:
-        precio_m2 = precio_num / superficie_num
-    else:
-        precio_m2 = 0
+    return True
 
-    # Criterio de oportunidad
-    es_oportunidad = precio_num > 0 and precio_m2 > 0 and precio_m2 < 3000
-    
-    razon = f"Precio/m²: {precio_m2:.2f} €/m²" if es_oportunidad else "No cumple criterios de precio"
-    return es_oportunidad, razon
-
-def ejecutar_monitor():
-    """Flujo principal del monitor de inmuebles."""
-    print("🚀 === INICIANDO MONITOR INMOBILIARIO ===")
-    print("🔍 Conectando con Apify para buscar inmuebles en Madrid...")
-    
-    pisos = obtener_pisos_idealista()
-    print(f"✓ Se han obtenido {len(pisos)} anuncios procesados.")
-
-    oportunidades = []
-
-    for piso in pisos:
-        es_oportunidad, razon = analizar_y_evaluar_piso(piso)
-        if es_oportunidad:
-            oportunidades.append((piso, razon))
-
-    print(f"🎯 Se han encontrado {len(oportunidades)} oportunidades.")
-
-    if oportunidades:
-        mensaje = f"<b>🏢 Monitor Inmobiliario - Oportunidades ({len(oportunidades)})</b>\n\n"
-        for idx, (piso, razon) in enumerate(oportunidades[:5], 1):
-            titulo = piso.get("propertyTitle", "Inmueble sin título")
-            precio = piso.get("price", "N/A")
-            url = piso.get("url", "#")
-            mensaje += f"{idx}. <b>{titulo}</b>\n💰 Precio: {precio} €\n📊 {razon}\n🔗 <a href='{url}'>Ver anuncio</a>\n\n"
-        
-        enviar_mensaje_telegram(mensaje)
-    else:
-        enviar_mensaje_telegram("ℹ️ <b>Monitor Inmobiliario:</b> Ejecución completada. No se encontraron nuevas oportunidades hoy.")
-
-if __name__ == "__main__":
-    ejecutar_monitor()
+# --- INSTRUCCIONES DE USO ---
+# Integra esta función 'es_propiedad_valida(item)' dentro de tu bucle de procesamiento
+# de resultados de la API antes de guardar en SQLite o enviar la alerta por Telegram.
