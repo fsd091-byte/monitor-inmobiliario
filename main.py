@@ -115,7 +115,7 @@ def ejecutar_proceso():
             validos += 1
             piso_id = item.get("propertyCode") or item.get("id")
             print(f"✅ VÁLIDO: {piso_id} - {muni} - {precio}€")
-            notificador.enviar_telegram(item)
+            notificador.enviar_alerta_pisoitem)
             gestor_db.guardar_visto(piso_id)
         else:
             print(f"❌ Descartado: {muni} | Precio: {precio}€ | Tipo: {item.get('propertyType')}")
