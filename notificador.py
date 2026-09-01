@@ -8,6 +8,8 @@ def enviar_alerta_piso(piso_analizado):
     """
     Envía un mensaje formateado a tu Telegram con el desglose de la oportunidad.
     """
+    zona = piso_analizado.get('zone') or piso_analizado.get('zona') or 'No especificada'
+    
     mensaje = (
         f"🎯 *¡OPORTUNIDAD INMOBILIARIA DETECTADA!*\n\n"
         f"📍 *Zona:* {piso_analizado['zona']}\n"
