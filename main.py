@@ -7,8 +7,9 @@ import extractor
 import notificador
 import gestor_db
 import json
+import unicodedata
 
-print("--- INICIANDO MONITOR INMOBILIARIO ---")
+# print("--- INICIANDO MONITOR INMOBILIARIO ---")
 
 TARGET_LOCATIONS = [
     # Corredor del Henares y Guadalajara
@@ -44,11 +45,12 @@ EXCLUDE_KEYWORDS = [
     "inversor", "alquilado", "local", "loft", "estudio industrial", "nave"
 ]
 
-import unicodedata
+
 
 def quitar_tildes(texto):
     if not texto:
         return ""
+    # Convierte a minúsculas y elimina tildes/acentos
     return ''.join(
         c for c in unicodedata.normalize('NFD', str(texto))
         if unicodedata.category(c) != 'Mn'
@@ -59,8 +61,10 @@ def procesar_inmueble(item):
     planta = str(item.get("floor", "")).lower()
     tiene_ascensor = item.get("hasLift", False)
     
-    # Unificamos todo el texto del inmueble (título, descripción, zona y URL) sin tildes
-    texto_completo = quitar_tildes(f"{item.get('title', '')} {item.get('description', '')} {item.get('zone', '')} {item.get('url', '')}")
+    # Concatenamos título, descripción, zona y la propia URL de Idealista
+    texto_completo = quitar_tildes(
+        f"{item.get('title', '')} {item.get('description', '')} {item.get('zone', '')} {item.get('url', '')}"
+    )
 
     # 1. Filtro de precio (50k - 175k)
     if isinstance(precio, (int, float)):
@@ -73,12 +77,12 @@ def procesar_inmueble(item):
     if planta.isdigit() and int(planta) >= 2 and not tiene_ascensor:
         return False, f"Planta {planta}ª sin ascensor"
 
-    # 3. Filtro de barrios excluidos (ej. San Cristóbal)
+    # 3. Filtro de barrios excluidos (busca en todo el contenido)
     for barrio in EXCLUDED_NEIGHBORHOODS:
         if barrio in texto_completo:
             return False, f"Barrio excluido por riesgo ('{barrio}')"
 
-    # 4. Filtro de palabras clave de riesgo (okupas, subastas, etc.)
+    # 4. Filtro de palabras clave (okupas, subastas, etc.)
     if 'EXCLUDE_KEYWORDS' in globals():
         for kw in EXCLUDE_KEYWORDS:
             if quitar_tildes(kw) in texto_completo:
