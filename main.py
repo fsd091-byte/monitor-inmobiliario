@@ -25,50 +25,32 @@ EXCLUDE_KEYWORDS = [
 
 
 def es_propiedad_valida(item):
-    # 1. Filtro de tipo de propiedad (flexible ante claves de Apify)
-    prop_type = str(item.get("propertyType") or item.get("type") or item.get("homeType") or "piso").lower()
-    tipos_validos = ["flat", "penthouse", "duplex", "piso", "atico", "ático", "homes", "vivienda", "none"]
-    if prop_type not in tipos_validos:
+    # 1. Filtro de tipo de propiedad (viene en 'title')
+    tipo = str(item.get("title", "")).lower().strip()
+    tipos_validos = ["flat", "piso", "penthouse", "duplex", "atico", "ático", "house", "chalet"]
+    if tipo and tipo not in tipos_validos:
         return False
 
-    # 2. Filtro de precio
+    # 2. Filtro de precio (entre 100k€ y 275k€)
     price = item.get("price")
-    if isinstance(price, str):
-        try:
-            price = float(price.replace(".", "").replace("€", "").strip())
-        except ValueError:
-            price = None
-            
-    if price and not (100000 <= price <= 275000):
+    if isinstance(price, (int, float)):
+        if not (100000 <= price <= 275000):
+            return False
+
+    # 3. Filtro de ascensor para plantas altas (ej. floor >= 2)
+    floor = str(item.get("floor", "")).lower()
+    has_lift = item.get("hasLift", False)
+    if floor.isdigit() and int(floor) >= 2 and not has_lift:
         return False
 
-    # 3. Palabras clave a excluir
-    title = str(item.get("title") or item.get("suggestedTexts", {}).get("title", "")).lower()
-    description = str(item.get("description") or "").lower()
-    full_text = f"{title} {description}"
-
-    if 'EXCLUDE_KEYWORDS' in globals() and EXCLUDE_KEYWORDS:
-        for kw in EXCLUDE_KEYWORDS:
-            if kw.lower() in full_text:
-                return False
-
-    # 4. Comprobación flexible de ubicación
+    # 4. Filtro de ubicación (viene en 'zone')
     if 'TARGET_LOCATIONS' in globals() and TARGET_LOCATIONS:
-        muni = str(item.get("municipality") or item.get("province") or item.get("address") or item.get("locationName") or item.get("url") or "").lower()
-        
-        # Si no hay texto de ubicación relevante, permitimos el paso si el titulo no lo contradice
-        if muni and muni != "none":
-            match = any(loc.lower() in muni for loc in TARGET_LOCATIONS)
-            if not match:
-                return False
+        zone = str(item.get("zone", "")).lower()
+        match = any(loc.lower() in zone for loc in TARGET_LOCATIONS)
+        if not match:
+            return False
 
     return True
-###
-def ejecutar_proceso():
-    print("Buscando ofertas en Apify...")
-    inmuebles = extractor.obtener_pisos_idealista()
-    print(f"Obtenidos {len(inmuebles)} inmuebles en total.")
-###
 
 def ejecutar_proceso():
     print("Buscando ofertas en Apify...")
