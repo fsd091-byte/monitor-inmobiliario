@@ -1,0 +1,32 @@
+[
+  {
+    "id": "11219507",
+    "title": "Piso en venta en Calle del Sauco",
+    "price": 147000,
+    "size": 53.0,
+    "rooms": 2,
+    "floor": "1",
+    "hasLift": false,
+    "zone": "Madrid",
+    "url": "https://www.idealista.com/inmueble/11219507/",
+    "features": ["Nuda propiedad"],
+    "tags": ["nudePropiedad"],
+    "subType": "flat",
+    "propertyType": "homes"
+  },
+  {
+    "id": "112201296",
+    "title": "Piso en venta en Avenida de la Albufera",
+    "price": 135000,
+    "size": 60.0,
+    "rooms": 2,
+    "floor": "2",
+    "hasLift": true,
+    "zone": "Madrid",
+    "url": "https://www.idealista.com/inmueble/112201296/",
+    "features": ["Garaje opcional"],
+    "tags": [],
+    "subType": "flat",
+    "propertyType": "homes"
+  }
+]
