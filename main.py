@@ -2,6 +2,8 @@ import os
 import requests
 import sqlite3
 
+print("--- INICIANDO MONITOR INMOBILIARIO ---")
+
 # --- LISTA DE MUNICIPIOS OBJETIVO ---
 TARGET_LOCATIONS = [
     # Sur / Suroeste de Madrid
