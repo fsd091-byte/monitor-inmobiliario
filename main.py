@@ -30,7 +30,7 @@ def es_propiedad_valida(item):
 
     # 2. Filtro de Precio (entre 100.000 € y 175.000 €)
     price = item.get("price", 0)
-    if not (100000 <= price <= 375000):
+    if not (10000 <= price <= 375000):
         return False
 
     # 3. Filtro de Habitaciones (mínimo 1)
