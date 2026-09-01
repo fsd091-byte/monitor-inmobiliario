@@ -1,8 +1,8 @@
 import os
 import requests
 import sqlite3
-from extractor import obtener_pisos_idealista # O el nombre de tu funcion en extractor.py
-from notificador import enviar_alerta_piso      # O el nombre de tu funcion en notificador.py
+from extractor import obtener_pisos_idealista 
+from notificador import enviar_alerta_piso
 import extractor
 import notificador
 import gestor_db
@@ -10,7 +10,6 @@ import json
 import unicodedata
 
 # 1. Parámetros de filtrado
-
 PRECIO_MIN = 50000
 PRECIO_MAX = 175000
 SUPERFICIE_MIN = 45.0
@@ -40,8 +39,8 @@ EXCLUDED_NEIGHBORHOODS = [
     "san cristobal",
     "la canada real", "canada real",
     "el pozo del tio raimundo", "pozo del tio raimundo",
-    "entrrevias", "entrevias"
-    "villaverde","villaverde"
+    "entrrevias", "entrevias",
+    "villaverde"
 ]
 
 EXCLUDE_KEYWORDS = [
@@ -50,7 +49,6 @@ EXCLUDE_KEYWORDS = [
     "nuda propiedad", "nuda-propiedad", "nudapropiedad",
     "renta antigua", "sin cedula", "sin cédula"
 ]
-
 
 
 def quitar_tildes(texto):
@@ -120,52 +118,12 @@ def procesar_inmueble(item):
                 return False, "Zona no objetivo"
 
     return True, "Cumple filtros"
-    
-    
-
-def es_propiedad_valida(item):
-    piso_id = item.get("id") or item.get("url")
-    
-    # 1. Filtro de precio
-    precio = item.get("price")
-    if isinstance(precio, (int, float)):
-        if not (50000 <= precio <= 175000):
-            print(f"  └─ Descartado ID {piso_id}: Precio fuera de rango ({precio}€)")
-            return False
-
-    # 2. Filtro de ascensor
-    planta = str(item.get("floor", "")).lower()
-    tiene_ascensor = item.get("hasLift", False)
-    if planta.isdigit() and int(planta) >= 2 and not tiene_ascensor:
-        print(f"  └─ Descartado ID {piso_id}: Planta {planta} sin ascensor")
-        return False
-
-    # 3. Palabras clave a excluir
-    title = str(item.get("title", "")).lower()
-    description = str(item.get("description", "")).lower()
-    full_text = f"{title} {description}"
-
-    if 'EXCLUDE_KEYWORDS' in globals() and EXCLUDE_KEYWORDS:
-        for kw in EXCLUDE_KEYWORDS:
-            if kw.lower() in full_text:
-                print(f"  └─ Descartado ID {piso_id}: Palabra excluida '{kw}'")
-                return False
-
-    # 4. Filtro de ubicación
-    if 'TARGET_LOCATIONS' in globals() and TARGET_LOCATIONS:
-        zona = str(item.get("zone", "")).lower()
-        if zona and zona != "madrid":
-            coincide = any(loc.lower() in zona for loc in TARGET_LOCATIONS)
-            if not coincide:
-                return False
-
-    return True
 
 
 def ejecutar_proceso():
-    # 1. Cargar base de datos e inmuebles desde Apify
-    db = gestor_db()  # O como se llame tu instancia/clase de base de datos
-    resultados_apify = obtener_pisos_idealista()  # Ajusta el nombre si tu función se llama diferente
+    # 1. Cargar base de datos (instanciando la clase GestorDB del módulo gestor_db) e inmuebles de Apify
+    db = gestor_db.GestorDB()  # Asegúrate de que tu clase en gestor_db.py se llama GestorDB (o cámbialo si tiene otro nombre)
+    resultados_apify = obtener_pisos_idealista()
 
     inmuebles_aceptados = []
 
@@ -199,7 +157,7 @@ def ejecutar_proceso():
 
             # 2. Enviar notificación por Telegram y guardar en BD
             try:
-                eenviar_alerta_piso(item)  # Ajusta al nombre de tu función de Telegram
+                enviar_alerta_piso(item)  # Corregido el error tipográfico
                 db.guardar(item_id)
             except Exception as e:
                 print(f"⚠️ Error enviando notificación para ID {item_id}: {e}")
