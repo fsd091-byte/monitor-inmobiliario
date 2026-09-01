@@ -54,7 +54,7 @@ def es_propiedad_valida(item):
 
 def ejecutar_proceso():
     print("Buscando ofertas en Apify...")
-    inmuebles = obtener_inmuebles_apify() # Llama a la funcion de tu extractor.py
+    inmuebles = obtener_pisos_idealista() # Llama a la funcion de tu extractor.py
     print(f"Obtenidos {len(inmuebles)} inmuebles en total.")
 
     for item in inmuebles:
