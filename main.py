@@ -43,9 +43,10 @@ EXCLUDED_NEIGHBORHOODS = [
 ]
 
 EXCLUDE_KEYWORDS = [
-    "ocupado", "okupa", "okupado", "sin posesion", "sin posesión", 
-    "nuda propiedad", "subasta", "cesion de remate", "cesión de remate",
-    "inversor", "alquilado", "local", "loft", "estudio industrial", "nave"
+    "ocupado", "okupado", "sin posesion", "sin posesión",
+    "proindiviso", "subasta", "cesion de remate", "cesión de remate",
+    "nuda propiedad", "nuda-propiedad", "nudapropiedad",
+    "renta antigua", "sin cedula", "sin cédula"
 ]
 
 
