@@ -3,6 +3,8 @@ import requests
 import sqlite3
 from extractor import obtener_pisos_idealista # O el nombre de tu funcion en extractor.py
 from notificador import enviar_alerta_piso      # O el nombre de tu funcion en notificador.py
+import extractor
+import notificador
 import gestor_db
 
 print("--- INICIANDO MONITOR INMOBILIARIO ---")
