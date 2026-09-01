@@ -11,6 +11,9 @@ import unicodedata
 
 # print("--- INICIANDO MONITOR INMOBILIARIO ---")
 
+HABITACIONES_MIN = 2
+SUPERFICIE_MIN = 45.0  # metros cuadrados mínimos
+
 TARGET_LOCATIONS = [
     # Corredor del Henares y Guadalajara
     "alcalá de henares", "alcala de henares",
@@ -56,12 +59,17 @@ def quitar_tildes(texto):
         if unicodedata.category(c) != 'Mn'
     ).lower()
 
+
 def procesar_inmueble(item):
     precio = item.get("price")
     planta = str(item.get("floor", "")).lower()
     tiene_ascensor = item.get("hasLift", False)
     
-    # Convierte ABSOLUTAMENTE TODO el objeto JSON a un único texto plano en minúsculas y sin tildes
+    # Extracción flexible de habitaciones y metros cuadrados
+    habitaciones = item.get("rooms") or item.get("roomsCount") or item.get("bedrooms", 0)
+    superficie = item.get("size") or item.get("builtArea") or item.get("sizeM2") or item.get("surface", 0)
+
+    # Texto completo para escaneo de riesgo y zonas
     texto_completo_json = quitar_tildes(str(item))
 
     # 1. Filtro de precio (50k - 175k)
@@ -71,22 +79,38 @@ def procesar_inmueble(item):
     else:
         return False, "Precio no disponible"
 
-    # 2. Filtro de ascensor (plantas 2ª o superiores)
+    # 2. Filtro de superficie mínima (mínimo 45 m²)
+    try:
+        superficie_val = float(superficie) if superficie is not None else 0
+        if superficie_val < SUPERFICIE_MIN:
+            return False, f"Superficie insuficiente ({superficie_val} m² < {SUPERFICIE_MIN} m²)"
+    except (ValueError, TypeError):
+        pass  # Si no viene la superficie, no descartamos directamente por esto salvo que prefieras ser estricto
+
+    # 3. Filtro de habitaciones (mínimo 2)
+    try:
+        hab_val = int(habitaciones) if habitaciones is not None else 0
+        if hab_val < HABITACIONES_MIN:
+            return False, f"Habitaciones insuficientes ({hab_val} < {HABITACIONES_MIN})"
+    except (ValueError, TypeError):
+        pass
+
+    # 4. Filtro de ascensor (plantas 2ª o superiores)
     if planta.isdigit() and int(planta) >= 2 and not tiene_ascensor:
         return False, f"Planta {planta}ª sin ascensor"
 
-    # 3. Filtro de barrios excluidos (escanea todo el JSON del inmueble)
+    # 5. Filtro de barrios excluidos por riesgo
     for barrio in EXCLUDED_NEIGHBORHOODS:
         if barrio in texto_completo_json:
             return False, f"Barrio excluido por riesgo ('{barrio}')"
 
-    # 4. Filtro de palabras clave (okupas, subastas, etc.)
+    # 6. Filtro de palabras clave de riesgo
     if 'EXCLUDE_KEYWORDS' in globals():
         for kw in EXCLUDE_KEYWORDS:
             if quitar_tildes(kw) in texto_completo_json:
                 return False, f"Aviso de riesgo/okupación ('{kw}')"
 
-    # 5. Filtro de ubicación objetivo
+    # 7. Filtro de ubicación objetivo
     if 'TARGET_LOCATIONS' in globals() and TARGET_LOCATIONS:
         zona_limpia = quitar_tildes(item.get('zone', ''))
         if zona_limpia != "madrid":
@@ -95,6 +119,7 @@ def procesar_inmueble(item):
                 return False, f"Zona '{item.get('zone')}' no coincide con TARGET_LOCATIONS"
 
     return True, "Cumple todos los filtros"
+    
 
 def es_propiedad_valida(item):
     piso_id = item.get("id") or item.get("url")
