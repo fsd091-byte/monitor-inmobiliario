@@ -61,6 +61,20 @@ def quitar_tildes(texto):
     ).lower()
 
 
+import re
+
+def limpiar_total(texto):
+    if not texto:
+        return ""
+    # Quita tildes y pasa a minúsculas
+    texto_base = ''.join(
+        c for c in unicodedata.normalize('NFD', str(texto))
+        if unicodedata.category(c) != 'Mn'
+    ).lower()
+    # Elimina espacios, guiones y cualquier carácter que no sea letra o número
+    return re.sub(r'[^a-z0-9]', '', texto_base)
+
+
 def procesar_inmueble(item):
     precio = item.get("price")
     planta = str(item.get("floor", "")).lower()
@@ -70,14 +84,8 @@ def procesar_inmueble(item):
     superficie = item.get("size") or item.get("builtArea") or item.get("sizeM2") or item.get("surface", 0)
     zona = item.get("zone") or item.get("municipality") or "Madrid"
 
-    # Capturamos también campos específicos donde suelen venir etiquetas o estados
-    status = str(item.get("status", ""))
-    tags = str(item.get("tags", ""))
-    property_type = str(item.get("propertyType", ""))
-    sub_type = str(item.get("subType", ""))
-    
-    # Texto completo ampliado que incluye todo el JSON + campos clave
-    texto_completo = quitar_tildes(f"{str(item)} {status} {tags} {property_type} {sub_type}")
+    # Convertimos todo el elemento a texto superlimpio sin espacios ni símbolos
+    texto_completo = limpiar_total(str(item))
 
     # 1. Filtro de precio (50k - 175k)
     if isinstance(precio, (int, float)):
@@ -94,7 +102,7 @@ def procesar_inmueble(item):
     except (ValueError, TypeError):
         pass
 
-    # 3. Filtro de habitaciones (mínimo 2)
+    # 3. Filtro de habitaciones (minimo 2)
     try:
         hab_val = int(habitaciones) if habitaciones is not None else 0
         if hab_val < HABITACIONES_MIN:
@@ -108,12 +116,12 @@ def procesar_inmueble(item):
 
     # 5. Filtro de barrios excluidos
     for barrio in EXCLUDED_NEIGHBORHOODS:
-        if barrio in texto_completo:
+        if limpiar_total(barrio) in texto_completo:
             return False, f"Barrio excluido ({barrio})"
 
-    # 6. Filtro de palabras clave (nuda propiedad, okupas, subastas, etc.)
+    # 6. Filtro de palabras clave (ahora blindado contra espacios y camelCase)
     for kw in EXCLUDE_KEYWORDS:
-        if quitar_tildes(kw) in texto_completo:
+        if limpiar_total(kw) in texto_completo:
             return False, f"Término prohibido ({kw})"
 
     # 7. Ubicación objetivo
