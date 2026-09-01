@@ -168,8 +168,7 @@ def ejecutar_proceso():
         # CHIVATO TEMPORAL: Si es el piso de la nuda propiedad, imprimimos su JSON exacto en consola
         item_id_actual = str(item.get("id") or item.get("propertyCode") or "")
         
-        print(f"\n--- INSPECCIONANDO PISO  ---"+item_id_actual+"\n")
-        
+               
         if item_id_actual == "11219507":
             print(f"\n--- INSPECCIONANDO PISO 11219507 ---")
             print(json.dumps(item, indent=2, ensure_ascii=False))
@@ -201,7 +200,8 @@ def ejecutar_proceso():
 
             # Imprime 1 sola línea por piso aceptado en la consola
             print(f"🏠 ID: {item_id} | {precio:,.0f}€ | {superficie} m² | {habitaciones} habs | Planta: {planta} ({ascensor}) | Zona: {zona} | Link: {url}")
-
+           
+                  
             # 2. Enviar notificación por Telegram y guardar en BD
             try:
                 enviar_alerta_piso(item)
