@@ -74,6 +74,7 @@ def limpiar_total(texto):
     # Elimina espacios, guiones y cualquier carácter que no sea letra o número
     return re.sub(r'[^a-z0-9]', '', texto_base)
 
+import sys
 
 def procesar_inmueble(item):
     precio = item.get("price")
@@ -84,7 +85,6 @@ def procesar_inmueble(item):
     superficie = item.get("size") or item.get("builtArea") or item.get("sizeM2") or item.get("surface", 0)
     zona = item.get("zone") or item.get("municipality") or "Madrid"
 
-    # Capturamos posibles listas de características o etiquetas típicas de Apify
     features = item.get("features", [])
     tags = item.get("tags", [])
     sub_type = item.get("subType", "")
@@ -92,15 +92,14 @@ def procesar_inmueble(item):
     
     item_id_actual = str(item.get("id") or item.get("propertyCode") or "")
 
-    # Si es el piso de la nuda propiedad, imprimimos sus campos específicos para ver dónde se esconde
+    # CHIVATO FORZADO: Si coincide con el piso o queremos ver los IDs que pasan
     if item_id_actual == "11219507":
-        print(f"\n[CHIVATO] Analizando piso 11219507:")
-        print(f" - Features: {features}")
-        print(f" - Tags: {tags}")
-        print(f" - SubType: {sub_type}")
-        print(f" - Title/Desc: {item.get('title')} / {item.get('description')}\n")
+        print(f"\n[CHIVATO ENCONTRADO] ID 11219507 detectado:", flush=True)
+        print(f" - Features: {features}", flush=True)
+        print(f" - Tags: {tags}", flush=True)
+        print(f" - SubType: {sub_type}", flush=True)
+        print(f" - Objeto completo: {item}\n", flush=True)
 
-    # Unimos todo de forma exhaustiva incluyendo features y tags
     texto_completo = limpiar_total(f"{str(item)} {str(features)} {str(tags)} {sub_type} {property_type}")
 
     # 1. Filtro de precio (50k - 175k)
@@ -135,7 +134,7 @@ def procesar_inmueble(item):
         if limpiar_total(barrio) in texto_completo:
             return False, f"Barrio excluido ({barrio})"
 
-    # 6. Filtro de palabras clave (blindado)
+    # 6. Filtro de palabras clave
     for kw in EXCLUDE_KEYWORDS:
         if limpiar_total(kw) in texto_completo:
             return False, f"Término prohibido ({kw})"
@@ -149,6 +148,8 @@ def procesar_inmueble(item):
                 return False, "Zona no objetivo"
 
     return True, "Cumple filtros"
+
+
 
 
 def ejecutar_proceso():
