@@ -62,12 +62,28 @@ def es_propiedad_valida(item):
                 return False
 
     return True
+###
+def ejecutar_proceso():
+    print("Buscando ofertas en Apify...")
+    inmuebles = extractor.obtener_pisos_idealista()
+    print(f"Obtenidos {len(inmuebles)} inmuebles en total.")
+###
+
+    import json
 
 def ejecutar_proceso():
     print("Buscando ofertas en Apify...")
     inmuebles = extractor.obtener_pisos_idealista()
     print(f"Obtenidos {len(inmuebles)} inmuebles en total.")
 
+    # IMPRIMIR EL PRIMER ANUNCIO PARA VER SUS CAMPOS REALES
+    if inmuebles:
+        print("--- ESTRUCTURA DEL PRIMER INMUEBLE ---")
+        print(json.dumps(inmuebles[0], indent=2, ensure_ascii=False))
+        print("--------------------------------------")
+
+    # Resto de tu bucle...
+    
     validos = 0
     for item in inmuebles:
         # Imprime la ubicacion detectada para ver como viene de Apify
@@ -86,6 +102,7 @@ def ejecutar_proceso():
     print(f"--- TOTAL VALIDOS TRAS FILTROS: {validos} ---")
 
     print(f"--- TOTAL VALIDOS TRAS FILTROS: {validos} ---")
+
 
 if __name__ == "__main__":
     ejecutar_proceso()
