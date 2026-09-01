@@ -65,64 +65,33 @@ def es_propiedad_valida(item):
 def ejecutar_proceso():
     print("--- INICIANDO MONITOR INMOBILIARIO ---")
     inmuebles = extractor.obtener_pisos_idealista()
-    print(f"Obtenidos {len(inmuebles)} inmuebles en total.")
+    print(f"Obtenidos {len(inmuebles)} inmuebles en total.\n")
 
     validos = 0
     for item in inmuebles:
         piso_id = item.get("id") or item.get("url")
-        precio = item.get("price")
-        zona = item.get("zone", "Desconocida")
-
-        if es_propiedad_valida(item):
+        es_valido, motivo = procesar_inmueble(item)
+        
+        if es_valido:
             validos += 1
-            print(f"✅ VÁLIDO: ID {piso_id} | {precio}€ | Zona: {zona}")
-
             if not gestor_db.ya_fue_visto(piso_id):
                 try:
                     notificador.enviar_alerta_piso(item)
-                    print(f"📩 Alerta enviada a Telegram para ID: {piso_id}")
+                    print(f"✓ Alerta enviada a tu Telegram con éxito para ID {piso_id}.")
+                except Exception as e:
+                    print(f"   └─ ⚠️ Error al enviar Telegram: {e}")
+                
+                # Envolver la persistencia en DB para evitar que falle el script
+                try:
                     gestor_db.guardar_visto(piso_id)
                 except Exception as e:
-                    print(f"Error al enviar a Telegram: {e}")
+                    print(f"   └─ ⚠️ Error al guardar en la BD ({piso_id}): {e}")
             else:
                 print(f"ℹ️ El inmueble {piso_id} ya fue notificado previamente.")
-
-    print(f"--- TOTAL VALIDOS TRAS FILTROS: {validos} ---")
-
-
-def ejecutar_proceso():
-    print("Buscando ofertas en Apify...")
-    inmuebles = extractor.obtener_pisos_idealista()
-    print(f"Obtenidos {len(inmuebles)} inmuebles en total.")
-
-    # Resto de tu bucle...
-    
-    validos = 0
-    for item in inmuebles:
-        
-        # IMPRIMIR EL PRIMER ANUNCIO PARA VER SUS CAMPOS REALES
-        print("--- ESTRUCTURA DEL PRIMER INMUEBLE ---")
-        print(json.dumps(inmuebles[0], indent=2, ensure_ascii=False))
-        print("--------------------------------------")
-        
-        # Imprime la ubicacion detectada para ver como viene de Apify
-
-        
-        muni = item.get("municipality") or item.get("locationName") or item.get("address")
-        precio = item.get("price")
-        
-        if es_propiedad_valida(item):
-            validos += 1
-            piso_id = item.get("propertyCode") or item.get("id")
-            print(f"✅ VÁLIDO: {piso_id} - {muni} - {precio}€")
-            notificador.enviar_alerta_piso(item)
-            gestor_db.guardar_visto(piso_id)
         else:
-            print(f"❌ Descartado: {muni} | Precio: {precio}€ | Tipo: {item.get('propertyType')}")
+            print(f"❌ DESCARTADO {piso_id}: {motivo}")
 
-    print(f"--- TOTAL VALIDOS TRAS FILTROS: {validos} ---")
-
-    print(f"--- TOTAL VALIDOS TRAS FILTROS: {validos} ---")
+    print(f"\n--- RESUMEN: {validos} de {len(inmuebles)} inmuebles pasaron los filtros ---")
 
 
 if __name__ == "__main__":
