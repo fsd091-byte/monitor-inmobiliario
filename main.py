@@ -9,10 +9,12 @@ import gestor_db
 import json
 import unicodedata
 
-# print("--- INICIANDO MONITOR INMOBILIARIO ---")
+# 1. Parámetros de filtrado
 
+PRECIO_MIN = 50000
+PRECIO_MAX = 175000
+SUPERFICIE_MIN = 45.0
 HABITACIONES_MIN = 2
-SUPERFICIE_MIN = 45.0  # metros cuadrados mínimos
 
 TARGET_LOCATIONS = [
     # Corredor del Henares y Guadalajara
