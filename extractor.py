@@ -1,9 +1,13 @@
 import os
 from apify_client import ApifyClient
 
+
 APIFY_TOKEN = os.getenv("APIFY_TOKEN", "")
 
+""" conexion real
+
 def obtener_pisos_idealista():
+    
     client = ApifyClient(APIFY_TOKEN)
     
     run_input = {
@@ -44,4 +48,21 @@ def obtener_pisos_idealista():
         return pisos_normalizados
     except Exception as e:
         print(f"❌ Error al procesar datos de Apify: {e}")
+        return []
+"""
+
+import json
+
+def obtener_pisos_idealista():
+    """
+    Función temporal en modo offline para depurar con los datos reales guardados.
+    """
+    print("📁 [MODO OFFLINE] Leyendo inmuebles desde 'pisos_prueba.json'...")
+    try:
+        with open("pisos_prueba.json", "r", encoding="utf-8") as f:
+            pisos = json.load(f)
+            print(f"✓ {len(pisos)} pisos cargados correctamente para pruebas.")
+            return pisos
+    except FileNotFoundError:
+        print("⚠️ No se encontró el archivo 'pisos_prueba.json'.")
         return []
