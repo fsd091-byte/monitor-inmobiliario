@@ -25,32 +25,61 @@ EXCLUDE_KEYWORDS = [
 
 
 def es_propiedad_valida(item):
-    # 1. Filtro de tipo de propiedad (viene en 'title')
+    # 1. Tipo de propiedad (evalúa la clave 'title')
     tipo = str(item.get("title", "")).lower().strip()
     tipos_validos = ["flat", "piso", "penthouse", "duplex", "atico", "ático", "house", "chalet"]
     if tipo and tipo not in tipos_validos:
         return False
 
-    # 2. Filtro de precio (entre 100k€ y 275k€)
-    price = item.get("price")
-    if isinstance(price, (int, float)):
-        if not (100000 <= price <= 275000):
+    # 2. Rango de precio (100k - 275k)
+    precio = item.get("price")
+    if isinstance(precio, (int, float)):
+        if not (100000 <= precio <= 275000):
             return False
 
-    # 3. Filtro de ascensor para plantas altas (ej. floor >= 2)
-    floor = str(item.get("floor", "")).lower()
-    has_lift = item.get("hasLift", False)
-    if floor.isdigit() and int(floor) >= 2 and not has_lift:
+    # 3. Filtro de ascensor para plantas 2ª o superiores
+    planta = str(item.get("floor", "")).lower()
+    tiene_ascensor = item.get("hasLift", False)
+    if planta.isdigit() and int(planta) >= 2 and not tiene_ascensor:
         return False
 
-    # 4. Filtro de ubicación (viene en 'zone')
+    # 4. Ubicación (evalúa la clave 'zone')
     if 'TARGET_LOCATIONS' in globals() and TARGET_LOCATIONS:
-        zone = str(item.get("zone", "")).lower()
-        match = any(loc.lower() in zone for loc in TARGET_LOCATIONS)
-        if not match:
+        zona = str(item.get("zone", "")).lower()
+        coincide = any(loc.lower() in zona for loc in TARGET_LOCATIONS)
+        if not coincide:
             return False
 
     return True
+
+
+def ejecutar_proceso():
+    print("--- INICIANDO MONITOR INMOBILIARIO ---")
+    inmuebles = extractor.obtener_pisos_idealista()
+    print(f"Obtenidos {len(inmuebles)} inmuebles en total.")
+
+    validos = 0
+    for item in inmuebles:
+        piso_id = item.get("id") or item.get("url")
+        precio = item.get("price")
+        zona = item.get("zone", "Desconocida")
+
+        if es_propiedad_valida(item):
+            validos += 1
+            print(f"✅ VÁLIDO: ID {piso_id} | {precio}€ | Zona: {zona}")
+
+            if not gestor_db.ya_fue_visto(piso_id):
+                try:
+                    notificador.enviar_telegram(item)
+                    print(f"📩 Alerta enviada a Telegram para ID: {piso_id}")
+                    gestor_db.guardar_visto(piso_id)
+                except Exception as e:
+                    print(f"Error al enviar a Telegram: {e}")
+            else:
+                print(f"ℹ️ El inmueble {piso_id} ya fue notificado previamente.")
+
+    print(f"--- TOTAL VALIDOS TRAS FILTROS: {validos} ---")
+
 
 def ejecutar_proceso():
     print("Buscando ofertas en Apify...")
