@@ -6,7 +6,7 @@ APIFY_TOKEN = os.getenv("APIFY_TOKEN", "")
 def obtener_pisos_idealista():
     client = ApifyClient(APIFY_TOKEN)
     
-run_input = {
+    run_input = {
         "location": "Madrid",
         "operation": "sale",
         "propertyType": "homes",
