@@ -121,8 +121,8 @@ def procesar_inmueble(item):
 
 
 def ejecutar_proceso():
-    # 1. Cargar base de datos (instanciando la clase GestorDB del módulo gestor_db) e inmuebles de Apify
-    db = gestor_db.GestorDB()  # Asegúrate de que tu clase en gestor_db.py se llama GestorDB (o cámbialo si tiene otro nombre)
+    # 1. Inicializar la base de datos y obtener inmuebles de Apify
+    gestor_db.inicializar_base_datos()
     resultados_apify = obtener_pisos_idealista()
 
     inmuebles_aceptados = []
@@ -138,18 +138,19 @@ def ejecutar_proceso():
             item_id = str(item.get("id") or item.get("propertyCode") or "")
             
             # Comprobar en la BD si ya se notificó anteriormente
-            if db.existe(item_id):
+            if gestor_db.ya_fue_visto(item_id):
                 continue
 
             inmuebles_aceptados.append(item)
             
-            # Formateo de atributos para el log limpio
+            # Extraer atributos para el log y la BD
             precio = item.get("price", 0)
             superficie = item.get("size") or item.get("builtArea") or item.get("sizeM2") or 0
             habitaciones = item.get("rooms") or item.get("roomsCount") or item.get("bedrooms", 0)
             planta = item.get("floor", "N/A")
             ascensor = "Con ascensor" if item.get("hasLift") else "Sin ascensor"
             zona = item.get("zone") or item.get("municipality") or "Madrid"
+            titulo = item.get("title", "Sin título")
             url = item.get("url") or item.get("link") or "Sin URL"
 
             # Imprime 1 sola línea por piso aceptado en la consola
@@ -157,8 +158,8 @@ def ejecutar_proceso():
 
             # 2. Enviar notificación por Telegram y guardar en BD
             try:
-                enviar_alerta_piso(item)  # Corregido el error tipográfico
-                db.guardar(item_id)
+                enviar_alerta_piso(item)
+                gestor_db.guardar_piso_visto(item_id, titulo, precio, zona)
             except Exception as e:
                 print(f"⚠️ Error enviando notificación para ID {item_id}: {e}")
 
