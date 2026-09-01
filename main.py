@@ -169,8 +169,8 @@ def ejecutar_proceso():
         item_id_actual = str(item.get("id") or item.get("propertyCode") or "")
         
                
-        if item_id_actual == "11219507":
-            print(f"\n--- INSPECCIONANDO PISO 11219507 ---")
+        if item_id_actual == "112195107 ":
+            print(f"\n--- INSPECCIONANDO PISO 112195107  ---")
             print(json.dumps(item, indent=2, ensure_ascii=False))
             print("------------------------------------\n")
         # FIN CHIVATO
