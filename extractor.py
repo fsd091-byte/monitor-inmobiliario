@@ -7,17 +7,16 @@ def obtener_pisos_idealista():
     client = ApifyClient(APIFY_TOKEN)
     
     run_input = {
-            "startUrls": [
-                {"url": "https://www.idealista.com/venta-viviendas/madrid/sur-suroeste/"},
-                {"url": "https://www.idealista.com/venta-viviendas/madrid/corredor-del-henares/"},
-                {"url": "https://www.idealista.com/venta-viviendas/guadalajara-provincia/"}
-            ],
-            "operation": "sale",
-            "propertyType": "homes",
-            "minPrice": "100000",
-            "maxPrice": "275000",
-            "maxItems": 100
-        }
+        "locations": [
+            "Madrid",
+            "Guadalajara"
+        ],
+        "operation": "sale",
+        "propertyType": "homes",
+        "minPrice": "100000",
+        "maxPrice": "275000",
+        "maxItems": 100
+    }
 
     print("🔍 Conectando con Apify para buscar inmuebles en Madrid...")
     
