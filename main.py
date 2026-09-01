@@ -168,7 +168,7 @@ def ejecutar_proceso():
         # CHIVATO TEMPORAL: Si es el piso de la nuda propiedad, imprimimos su JSON exacto en consola
         item_id_actual = str(item.get("id") or item.get("propertyCode") or "")
         
-        print(f"\n--- INSPECCIONANDO PISO  ---"+item_id_actual+"-"+item.id+"\n")
+        print(f"\n--- INSPECCIONANDO PISO  ---"+item_id_actual+"-"+item_id+"\n")
         
         if item_id_actual == "11219507":
             print(f"\n--- INSPECCIONANDO PISO 11219507 ---")
