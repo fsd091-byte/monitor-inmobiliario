@@ -160,13 +160,16 @@ def ejecutar_proceso():
     inmuebles_aceptados = []
 
     print("\n" + "="*80)
-    print(" 📋 INMUEBLES SELECCIONADOS QUE CUMPLEN TODOS LOS CRITERIOS v1")
+    print(" 📋 INMUEBLES SELECCIONADOS QUE CUMPLEN TODOS LOS CRITERIOS v2")
     print("="*80)
 
     for item in resultados_apify:
 
         # CHIVATO TEMPORAL: Si es el piso de la nuda propiedad, imprimimos su JSON exacto en consola
         item_id_actual = str(item.get("id") or item.get("propertyCode") or "")
+        
+        print(f"\n--- INSPECCIONANDO PISO  ---"+item_id_actual+"-"+item.id+"\n")
+        
         if item_id_actual == "11219507":
             print(f"\n--- INSPECCIONANDO PISO 11219507 ---")
             print(json.dumps(item, indent=2, ensure_ascii=False))
