@@ -25,16 +25,20 @@ EXCLUDE_KEYWORDS = [
 
 
 def es_propiedad_valida(item):
-    # 1. Filtro de precio (100k - 275k)
+    piso_id = item.get("id") or item.get("url")
+    
+    # 1. Filtro de precio
     precio = item.get("price")
     if isinstance(precio, (int, float)):
         if not (100000 <= precio <= 275000):
+            print(f"  └─ Descartado ID {piso_id}: Precio fuera de rango ({precio}€)")
             return False
 
-    # 2. Filtro de ascensor para plantas 2ª o superiores
+    # 2. Filtro de ascensor
     planta = str(item.get("floor", "")).lower()
     tiene_ascensor = item.get("hasLift", False)
     if planta.isdigit() and int(planta) >= 2 and not tiene_ascensor:
+        print(f"  └─ Descartado ID {piso_id}: Planta {planta} sin ascensor")
         return False
 
     # 3. Palabras clave a excluir
@@ -45,12 +49,13 @@ def es_propiedad_valida(item):
     if 'EXCLUDE_KEYWORDS' in globals() and EXCLUDE_KEYWORDS:
         for kw in EXCLUDE_KEYWORDS:
             if kw.lower() in full_text:
+                print(f"  └─ Descartado ID {piso_id}: Palabra excluida '{kw}'")
                 return False
 
-    # 4. Filtro de ubicación flexible usando la clave 'zone'
+    # 4. Filtro de ubicación
     if 'TARGET_LOCATIONS' in globals() and TARGET_LOCATIONS:
         zona = str(item.get("zone", "")).lower()
-        if zona:
+        if zona and zona != "madrid":
             coincide = any(loc.lower() in zona for loc in TARGET_LOCATIONS)
             if not coincide:
                 return False
