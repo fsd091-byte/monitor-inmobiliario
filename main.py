@@ -67,14 +67,20 @@ def ejecutar_proceso():
 
     validos = 0
     for item in inmuebles:
+        # Imprime la ubicacion detectada para ver como viene de Apify
+        muni = item.get("municipality") or item.get("locationName") or item.get("address")
+        precio = item.get("price")
+        
         if es_propiedad_valida(item):
             validos += 1
             piso_id = item.get("propertyCode") or item.get("id")
-            print(f"✅ Piso válido encontrado: {piso_id}")
-            if not gestor_db.ya_fue_visto(piso_id):
-                print(f"Enviando alerta Telegram para: {piso_id}")
-                notificador.enviar_telegram(item)
-                gestor_db.guardar_visto(piso_id)
+            print(f"✅ VÁLIDO: {piso_id} - {muni} - {precio}€")
+            notificador.enviar_telegram(item)
+            gestor_db.guardar_visto(piso_id)
+        else:
+            print(f"❌ Descartado: {muni} | Precio: {precio}€ | Tipo: {item.get('propertyType')}")
+
+    print(f"--- TOTAL VALIDOS TRAS FILTROS: {validos} ---")
 
     print(f"--- TOTAL VALIDOS TRAS FILTROS: {validos} ---")
 
