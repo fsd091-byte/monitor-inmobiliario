@@ -53,19 +53,22 @@ def es_propiedad_valida(item):
     return True
 
 def ejecutar_proceso():
-    print("Buscando ofertas en Apify de la funcion obtener_pisos_idealista()...")
-    inmuebles = obtener_pisos_idealista() # Llama a la funcion de tu extractor.py
+    print("Buscando ofertas en Apify...")
+    inmuebles = extractor.obtener_pisos_idealista()
     print(f"Obtenidos {len(inmuebles)} inmuebles en total.")
 
+    validos = 0
     for item in inmuebles:
         if es_propiedad_valida(item):
+            validos += 1
             piso_id = item.get("propertyCode") or item.get("id")
-            
-            # Comprobacion de vistos
+            print(f"✅ Piso válido encontrado: {piso_id}")
             if not gestor_db.ya_fue_visto(piso_id):
-                print(f"Enviando alerta para inmueble: {piso_id}")
-                enviar_alerta_piso(item)
+                print(f"Enviando alerta Telegram para: {piso_id}")
+                notificador.enviar_telegram(item)
                 gestor_db.guardar_visto(piso_id)
+
+    print(f"--- TOTAL VALIDOS TRAS FILTROS: {validos} ---")
 
 if __name__ == "__main__":
     ejecutar_proceso()
