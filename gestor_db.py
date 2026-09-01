@@ -31,14 +31,11 @@ def ya_fue_visto(id_anuncio):
     Verifica si un id_anuncio ya está registrado.
     Devuelve True si ya existe, False si es un anuncio nuevo.
     """
-    """
     with obtener_conexion() as conexion:
         cursor = conexion.cursor()
         cursor.execute("SELECT 1 FROM pisos_vistos WHERE id_anuncio = ?", (id_anuncio,))
         resultado = cursor.fetchone()
     return resultado is not None
-    """
-    return False
 
 def guardar_piso_visto(id_anuncio, titulo, precio, zona):
     """
@@ -48,7 +45,7 @@ def guardar_piso_visto(id_anuncio, titulo, precio, zona):
     with obtener_conexion() as conexion:
         cursor = conexion.cursor()
         cursor.execute("""
-            INSERT INTO pisos_vistos (id_anuncio, titulo, precio, zona, fecha_guardado)
+            INSERT OR IGNORE INTO pisos_vistos (id_anuncio, titulo, precio, zona, fecha_guardado)
             VALUES (?, ?, ?, ?, ?)
         """, (id_anuncio, titulo, precio, zona, fecha_actual))
         conexion.commit()
