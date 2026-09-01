@@ -160,7 +160,7 @@ def ejecutar_proceso():
     inmuebles_aceptados = []
 
     print("\n" + "="*80)
-    print(" 📋 INMUEBLES SELECCIONADOS QUE CUMPLEN TODOS LOS CRITERIOS")
+    print(" 📋 INMUEBLES SELECCIONADOS QUE CUMPLEN TODOS LOS CRITERIOS v1")
     print("="*80)
 
     for item in resultados_apify:
