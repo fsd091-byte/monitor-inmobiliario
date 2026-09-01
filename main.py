@@ -23,6 +23,42 @@ EXCLUDE_KEYWORDS = [
     "inversor", "alquilado", "local", "loft", "estudio industrial", "nave"
 ]
 
+def procesar_inmueble(item):
+    precio = item.get("price")
+    planta = str(item.get("floor", "")).lower()
+    tiene_ascensor = item.get("hasLift", False)
+    zona = item.get("zone", "")
+
+    # 1. Filtro de precio
+    if isinstance(precio, (int, float)):
+        if not (100000 <= precio <= 275000):
+            return False, f"Precio fuera de rango ({precio}€)"
+    else:
+        return False, "Precio no disponible"
+
+    # 2. Filtro de ascensor (plantas 2ª o superiores)
+    if planta.isdigit() and int(planta) >= 2 and not tiene_ascensor:
+        return False, f"Planta {planta}ª sin ascensor"
+
+    # 3. Palabras clave excluidas
+    title = str(item.get("title", "")).lower()
+    description = str(item.get("description", "")).lower()
+    full_text = f"{title} {description}"
+
+    if 'EXCLUDE_KEYWORDS' in globals() and EXCLUDE_KEYWORDS:
+        for kw in EXCLUDE_KEYWORDS:
+            if kw.lower() in full_text:
+                return False, f"Palabra excluida '{kw}'"
+
+    # 4. Filtro de ubicación
+    if 'TARGET_LOCATIONS' in globals() and TARGET_LOCATIONS:
+        zona_lower = str(zona).lower()
+        coincide = any(loc.lower() in zona_lower for loc in TARGET_LOCATIONS)
+        if not coincide:
+            return False, f"Zona '{zona}' no coincide con TARGET_LOCATIONS"
+
+    return True, "Cumple todos los filtros"
+
 
 def es_propiedad_valida(item):
     piso_id = item.get("id") or item.get("url")
