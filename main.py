@@ -62,7 +62,6 @@ def es_propiedad_valida(item):
 
     return True
 
-
 def ejecutar_proceso():
     print("--- INICIANDO MONITOR INMOBILIARIO ---")
     inmuebles = extractor.obtener_pisos_idealista()
@@ -80,38 +79,7 @@ def ejecutar_proceso():
 
             if not gestor_db.ya_fue_visto(piso_id):
                 try:
-                    notificador.enviar_telegram(item)
-                    print(f"📩 Alerta enviada a Telegram para ID: {piso_id}")
-                    gestor_db.guardar_visto(piso_id)
-                except Exception as e:
-                    print(f"Error al enviar a Telegram: {e}")
-            else:
-                print(f"ℹ️ El inmueble {piso_id} ya fue notificado previamente.")
-        else:
-            print(f"❌ Descartado: ID {piso_id} | {precio}€ | Zona: {zona}")
-
-    print(f"--- TOTAL VALIDOS TRAS FILTROS: {validos} ---")
-
-
-
-def ejecutar_proceso():
-    print("--- INICIANDO MONITOR INMOBILIARIO ---")
-    inmuebles = extractor.obtener_pisos_idealista()
-    print(f"Obtenidos {len(inmuebles)} inmuebles en total.")
-
-    validos = 0
-    for item in inmuebles:
-        piso_id = item.get("id") or item.get("url")
-        precio = item.get("price")
-        zona = item.get("zone", "Desconocida")
-
-        if es_propiedad_valida(item):
-            validos += 1
-            print(f"✅ VÁLIDO: ID {piso_id} | {precio}€ | Zona: {zona}")
-
-            if not gestor_db.ya_fue_visto(piso_id):
-                try:
-                    notificador.enviar_telegram(item)
+                    notificador.enviar_alerta_piso(item)
                     print(f"📩 Alerta enviada a Telegram para ID: {piso_id}")
                     gestor_db.guardar_visto(piso_id)
                 except Exception as e:
