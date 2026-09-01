@@ -7,9 +7,10 @@ def obtener_pisos_idealista():
     client = ApifyClient(APIFY_TOKEN)
     
     run_input = {
-        "locations": [
-            "Madrid",
-            "Guadalajara"
+        "locationNames": [
+            "Fuenlabrada", "Getafe", "Móstoles", "Alcorcón", "Pinto", "Parla",
+            "San Fernando de Henares", "Coslada", "Torrejón de Ardoz", 
+            "Alcalá de Henares", "Azuqueca de Henares", "Alovera", "Guadalajara"
         ],
         "operation": "sale",
         "propertyType": "homes",
