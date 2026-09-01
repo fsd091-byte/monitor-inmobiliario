@@ -6,17 +6,13 @@ APIFY_TOKEN = os.getenv("APIFY_TOKEN", "")
 def obtener_pisos_idealista():
     client = ApifyClient(APIFY_TOKEN)
     
-    run_input = {
-        "locationNames": [
-            "Fuenlabrada", "Getafe", "Móstoles", "Alcorcón", "Pinto", "Parla",
-            "San Fernando de Henares", "Coslada", "Torrejón de Ardoz", 
-            "Alcalá de Henares", "Azuqueca de Henares", "Alovera", "Guadalajara"
-        ],
+run_input = {
+        "location": "Madrid",
         "operation": "sale",
         "propertyType": "homes",
         "minPrice": "100000",
         "maxPrice": "275000",
-        "maxItems": 100
+        "maxItems": 200
     }
 
     print("🔍 Conectando con Apify para buscar inmuebles en Madrid...")
