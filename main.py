@@ -61,10 +61,8 @@ def procesar_inmueble(item):
     planta = str(item.get("floor", "")).lower()
     tiene_ascensor = item.get("hasLift", False)
     
-    # Concatenamos título, descripción, zona y la propia URL de Idealista
-    texto_completo = quitar_tildes(
-        f"{item.get('title', '')} {item.get('description', '')} {item.get('zone', '')} {item.get('url', '')}"
-    )
+    # Convierte ABSOLUTAMENTE TODO el objeto JSON a un único texto plano en minúsculas y sin tildes
+    texto_completo_json = quitar_tildes(str(item))
 
     # 1. Filtro de precio (50k - 175k)
     if isinstance(precio, (int, float)):
@@ -77,15 +75,15 @@ def procesar_inmueble(item):
     if planta.isdigit() and int(planta) >= 2 and not tiene_ascensor:
         return False, f"Planta {planta}ª sin ascensor"
 
-    # 3. Filtro de barrios excluidos (busca en todo el contenido)
+    # 3. Filtro de barrios excluidos (escanea todo el JSON del inmueble)
     for barrio in EXCLUDED_NEIGHBORHOODS:
-        if barrio in texto_completo:
+        if barrio in texto_completo_json:
             return False, f"Barrio excluido por riesgo ('{barrio}')"
 
     # 4. Filtro de palabras clave (okupas, subastas, etc.)
     if 'EXCLUDE_KEYWORDS' in globals():
         for kw in EXCLUDE_KEYWORDS:
-            if quitar_tildes(kw) in texto_completo:
+            if quitar_tildes(kw) in texto_completo_json:
                 return False, f"Aviso de riesgo/okupación ('{kw}')"
 
     # 5. Filtro de ubicación objetivo
@@ -97,7 +95,6 @@ def procesar_inmueble(item):
                 return False, f"Zona '{item.get('zone')}' no coincide con TARGET_LOCATIONS"
 
     return True, "Cumple todos los filtros"
-
 
 def es_propiedad_valida(item):
     piso_id = item.get("id") or item.get("url")
