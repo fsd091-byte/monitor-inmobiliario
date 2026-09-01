@@ -2,7 +2,7 @@ import os
 import requests
 import sqlite3
 from extractor import obtener_pisos_idealista # O el nombre de tu funcion en extractor.py
-from notificador import enviar_telegram      # O el nombre de tu funcion en notificador.py
+from notificador import enviar_alerta_piso      # O el nombre de tu funcion en notificador.py
 import gestor_db
 
 print("--- INICIANDO MONITOR INMOBILIARIO ---")
@@ -64,7 +64,7 @@ def ejecutar_proceso():
             # Comprobacion de vistos
             if not gestor_db.ya_fue_visto(piso_id):
                 print(f"Enviando alerta para inmueble: {piso_id}")
-                enviar_telegram(item)
+                enviar_alerta_piso(item)
                 gestor_db.guardar_visto(piso_id)
 
 if __name__ == "__main__":
