@@ -88,14 +88,14 @@ def procesar_inmueble(item):
     zona = item.get("zone") or item.get("municipality") or "Madrid"
     item_id_actual = str(item.get("id") or item.get("propertyCode") or "")
 
-    # 1. Comprobación expresa de las etiquetas (labels) de Idealista (aquí viene 'occupation.bareOwnership')
+    # 1. Blindaje anti-nuda propiedad por etiquetas técnicas de Idealista (occupation.bareOwnership)
     labels = item.get("labels", [])
     for label in labels:
         label_text = str(label.get("name", "")) + " " + str(label.get("text", ""))
         if "bareownership" in quitar_tildes(label_text).lower() or "nuda" in quitar_tildes(label_text).lower():
             return False, "Término prohibido (etiqueta de nuda propiedad)"
 
-    # Convertimos todo el objeto a texto plano para el filtro general
+    # Convertimos todo el objeto a texto plano para el filtro general de palabras clave
     texto_total_plano = quitar_tildes(str(item)).lower()
 
     # 2. Filtro de precio
