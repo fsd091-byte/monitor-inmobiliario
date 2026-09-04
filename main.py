@@ -168,20 +168,20 @@ def ejecutar_proceso():
 
     for item in resultados_apify:
 
-        # CHIVATO TEMPORAL: Si es el piso de la nuda propiedad, imprimimos su JSON exacto en consola
-        item_id_actual = str(item.get("id") or item.get("propertyCode") or "")
-        
-               
-        if item_id_actual == "112195107":
-            print(f"\n--- INSPECCIONANDO PISO 112195107  ---")
-            print(json.dumps(item, indent=2, ensure_ascii=False))
-            print("------------------------------------\n")
-        # FIN CHIVATO
-        
         es_valido, motivo = procesar_inmueble(item)
         
+        if not es_valido:
+            print(f"❌ Descartado ID {item.get('id', 'N/A')}: {motivo}")
+            continue
+            
+        print(f"✅ ¡APROBADO! ID {item.get('id', 'N/A')}")
+        inmuebles_aceptados.append(item)
+        
         if es_valido:
-            item_id = str(item.get("id") or item.get("propertyCode") or "")
+            item_id = str(item.get("id") or item.get("propertyCode") or "")   
+            
+
+       
             
             # Comprobar en la BD si ya se notificó anteriormente
             # if gestor_db.ya_fue_visto(item_id):
