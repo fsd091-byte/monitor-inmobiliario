@@ -94,6 +94,9 @@ def procesar_inmueble(item):
     
     item_id_actual = str(item.get("id") or item.get("propertyCode") or "")
 
+
+
+    
     # CHIVATO FORZADO: Si coincide con el piso o queremos ver los IDs que pasan
     if item_id_actual == "11219507":
         print(f"\n[CHIVATO ENCONTRADO] ID 11219507 detectado:", flush=True)
@@ -107,6 +110,10 @@ def procesar_inmueble(item):
     descripcion = str(item.get("description") or item.get("text") or "")
     texto_bruto = f"{titulo} {descripcion} {str(features)} {str(tags)} {sub_type} {property_type} {str(item)}"
     texto_completo = " ".join(limpiar_total(texto_bruto).split())
+
+    # CHIVATO: Imprime si contiene algo sospechoso o para ver qué pasó con este piso
+    if "nuda" in texto_completo:
+        print(f"¡DETECTADA PALABRA CLAVE! Texto analizado: {texto_completo}", flush=True)
 
     # 1. Filtro de precio
     if isinstance(precio, (int, float)):
