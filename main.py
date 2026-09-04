@@ -150,13 +150,15 @@ def procesar_inmueble(item):
     
 def ejecutar_proceso():
 
-    print("TIPO DE DATO:", type(resultados_apify[0]))
-    print("EJEMPLO PLANO:", str(resultados_apify[0])[:200])
+
 
     # 1. Inicializar la base de datos y obtener inmuebles de Apify
     gestor_db.inicializar_base_datos()
     
     resultados_apify = obtener_pisos_desde_json()
+
+    print("TIPO DE DATO:", type(resultados_apify[0]))
+    print("EJEMPLO PLANO:", str(resultados_apify[0])[:200])
 
     inmuebles_aceptados = []
 
