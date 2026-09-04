@@ -1,6 +1,30 @@
 import os
 from apify_client import ApifyClient
+import sqlite3
 
+def obtener_pisos_desde_db(db_path="inmuebles.db"):
+    """
+    Lee todos los inmuebles guardados históricamente en la base de datos
+    para usarlos como banco de pruebas offline.
+    """
+    print(f"🗄️ [MODO OFFLINE DB] Leyendo inmuebles desde la base de datos '{db_path}'...")
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row  # Para acceder a las columnas por nombre
+        cursor = conn.cursor()
+        
+        # Ajusta el nombre de la tabla si en tu gestor_db se llama diferente (ej. 'inmuebles' o 'pisos')
+        cursor.execute("SELECT * FROM inmuebles") 
+        filas = cursor.fetchall()
+        
+        pisos = [dict(fila) for fila in filas]
+        conn.close()
+        
+        print(f"✓ {len(pisos)} pisos cargados desde la base de datos para pruebas.")
+        return pisos
+    except Exception as e:
+        print(f"⚠️ Error al leer la base de datos: {e}")
+        return []
 
 APIFY_TOKEN = os.getenv("APIFY_TOKEN", "")
 
