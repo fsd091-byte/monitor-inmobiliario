@@ -79,6 +79,22 @@ def limpiar_total(texto):
 import sys
 
 def procesar_inmueble(item):
+    # 0. BLINDAJE RADICAL ANTINUDA Y PROHIBIDAS: Análisis de texto bruto antes de cualquier otro filtro
+    texto_bruto_global = quitar_tildes(str(item)).lower()
+    
+    # Comprobación directa de cada palabra prohibida
+    for kw in EXCLUDE_KEYWORDS:
+        kw_limpia = quitar_tildes(kw).lower()
+        if kw_limpia in texto_bruto_global:
+            return False, f"Término prohibido estricto ({kw})"
+
+    # Comprobación extra por si viene en etiquetas técnicas (labels o occupation)
+    labels = item.get("labels", [])
+    for label in labels:
+        label_str = quitar_tildes(str(label)).lower()
+        if "nuda" in label_str or "bareownership" in label_str or "ocupado" in label_str:
+            return False, "Término prohibido por etiqueta técnica"
+
     precio = item.get("price")
     planta = str(item.get("floor", "")).lower()
     tiene_ascensor = item.get("hasLift", False)
@@ -86,28 +102,15 @@ def procesar_inmueble(item):
     habitaciones = item.get("rooms") or item.get("roomsCount") or item.get("bedrooms", 0)
     superficie = item.get("size") or item.get("builtArea") or item.get("sizeM2") or item.get("surface", 0)
     zona = item.get("zone") or item.get("municipality") or "Madrid"
-    item_id_actual = str(item.get("id") or item.get("propertyCode") or "")
 
-    # 1. Comprobación de etiquetas técnicas de Idealista
-    labels = item.get("labels", [])
-    for label in labels:
-        label_text = str(label.get("name", "")) + " " + str(label.get("text", ""))
-        if "bareownership" in quitar_tildes(label_text).lower() or "nuda" in quitar_tildes(label_text).lower():
-            return False, "Término prohibido (etiqueta de nuda propiedad)"
-
-    # 2. Convertimos todo el objeto a texto y colapsamos saltos de línea y espacios múltiples en uno solo
-    texto_crudo = str(item)
-    texto_sin_saltos = " ".join(texto_crudo.split())
-    texto_total_plano = quitar_tildes(texto_sin_saltos).lower()
-
-    # 3. Filtro de precio
+    # 1. Filtro de precio
     if isinstance(precio, (int, float)):
         if not (PRECIO_MIN <= precio <= PRECIO_MAX):
             return False, "Precio fuera de rango"
     else:
         return False, "Precio no disponible"
 
-    # 4. Filtro de superficie mínima
+    # 2. Filtro de superficie mínima
     try:
         superficie_val = float(superficie) if superficie is not None else 0
         if superficie_val < SUPERFICIE_MIN:
@@ -115,7 +118,7 @@ def procesar_inmueble(item):
     except (ValueError, TypeError):
         pass
 
-    # 5. Filtro de habitaciones
+    # 3. Filtro de habitaciones
     try:
         hab_val = int(habitaciones) if habitaciones is not None else 0
         if hab_val < HABITACIONES_MIN:
@@ -123,22 +126,16 @@ def procesar_inmueble(item):
     except (ValueError, TypeError):
         pass
 
-    # 6. Filtro de ascensor (plantas 2ª o superiores)
+    # 4. Filtro de ascensor (plantas 2ª o superiores)
     if planta.isdigit() and int(planta) >= 2 and not tiene_ascensor:
         return False, "Planta alta sin ascensor"
 
-    # 7. Filtro de barrios excluidos
+    # 5. Filtro de barrios excluidos
     for barrio in EXCLUDED_NEIGHBORHOODS:
-        if quitar_tildes(barrio).lower() in texto_total_plano:
+        if quitar_tildes(barrio).lower() in texto_bruto_global:
             return False, f"Barrio excluido ({barrio})"
 
-    # 8. Filtro estricto de palabras clave (incluso partidas por saltos de línea)
-    for kw in EXCLUDE_KEYWORDS:
-        kw_limpia = " ".join(quitar_tildes(kw).split()).lower()
-        if kw_limpia in texto_total_plano:
-            return False, f"Término prohibido ({kw})"
-
-    # 9. Ubicación objetivo
+    # 6. Ubicación objetivo
     if 'TARGET_LOCATIONS' in globals() and TARGET_LOCATIONS:
         zona_limpia = quitar_tildes(zona)
         if zona_limpia != "madrid":
