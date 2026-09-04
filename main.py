@@ -165,16 +165,10 @@ def procesar_inmueble(item):
 
     return True, "Cumple filtros"
     
-
-
-
 def ejecutar_proceso():
     # 1. Inicializar la base de datos y obtener inmuebles de Apify
     gestor_db.inicializar_base_datos()
     
-    # resultados_apify = obtener_pisos_idealista()
-    # Usa esto mientras estemos probando con la base de datos histórica:
-    # resultados_apify = obtener_pisos_desde_db()
     resultados_apify = obtener_pisos_desde_json()
 
     inmuebles_aceptados = []
@@ -184,53 +178,45 @@ def ejecutar_proceso():
     print("="*80)
 
     for item in resultados_apify:
-
         es_valido, motivo = procesar_inmueble(item)
         
         if not es_valido:
             print(f"❌ Descartado ID {item.get('id', 'N/A')}: {motivo}")
             continue
             
-        print(f"✅ ¡APROBADO! ID {item.get('id', 'N/A')}")
+        item_id = str(item.get("id") or item.get("propertyCode") or "")
+
+        # Comprobar en la BD si ya se notificó anteriormente para saltarlo
+        if gestor_db.ya_fue_visto(item_id):
+            continue
+            
+        print(f"✅ ¡APROBADO! ID {item_id}")
         inmuebles_aceptados.append(item)
         
-        if es_valido:
-            item_id = str(item.get("id") or item.get("propertyCode") or "")   
-            
+        # Extraer atributos para el log y la BD
+        precio = item.get("price", 0)
+        superficie = item.get("size") or item.get("builtArea") or item.get("sizeM2") or 0
+        habitaciones = item.get("rooms") or item.get("roomsCount") or item.get("bedrooms", 0)
+        planta = item.get("floor", "N/A")
+        ascensor = "Con ascensor" if item.get("hasLift") else "Sin ascensor"
+        zona = item.get("zone") or item.get("municipality") or "Madrid"
+        titulo = item.get("title", "Sin título")
+        url = item.get("url") or item.get("link") or "Sin URL"
 
-       
-            
-            # Comprobar en la BD si ya se notificó anteriormente
-            # if gestor_db.ya_fue_visto(item_id):
-            #    continue
-
-            inmuebles_aceptados.append(item)
-            
-            # Extraer atributos para el log y la BD
-            precio = item.get("price", 0)
-            superficie = item.get("size") or item.get("builtArea") or item.get("sizeM2") or 0
-            habitaciones = item.get("rooms") or item.get("roomsCount") or item.get("bedrooms", 0)
-            planta = item.get("floor", "N/A")
-            ascensor = "Con ascensor" if item.get("hasLift") else "Sin ascensor"
-            zona = item.get("zone") or item.get("municipality") or "Madrid"
-            titulo = item.get("title", "Sin título")
-            url = item.get("url") or item.get("link") or "Sin URL"
-
-            # Imprime 1 sola línea por piso aceptado en la consola
-            print(f"🏠 ID: {item_id} | {precio:,.0f}€ | {superficie} m² | {habitaciones} habs | Planta: {planta} ({ascensor}) | Zona: {zona} | Link: {url}")
-           
-                  
-            # 2. Enviar notificación por Telegram y guardar en BD
-            try:
-                enviar_alerta_piso(item)
-                gestor_db.guardar_piso_visto(item_id, titulo, precio, zona)
-            except Exception as e:
-                print(f"⚠️ Error enviando notificación para ID {item_id}: {e}")
+        # Imprime 1 sola línea por piso aceptado en la consola
+        print(f"🏠 ID: {item_id} | {precio:,.0f}€ | {superficie} m² | {habitaciones} habs | Planta: {planta} ({ascensor}) | Zona: {zona} | Link: {url}")
+         
+        # 2. Enviar notificación por Telegram y guardar en BD
+        try:
+            enviar_alerta_piso(item)
+            gestor_db.guardar_piso_visto(item_id, titulo, precio, zona)
+        except Exception as e:
+            print(f"⚠️ Error enviando notificación para ID {item_id}: {e}")
 
     print("="*80)
     print(f" Total inmuebles nuevos notificados: {len(inmuebles_aceptados)}")
     print("="*80 + "\n")
-
+    
 
 if __name__ == "__main__":
     ejecutar_proceso()
