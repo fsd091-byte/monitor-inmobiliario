@@ -86,37 +86,14 @@ def procesar_inmueble(item):
     habitaciones = item.get("rooms") or item.get("roomsCount") or item.get("bedrooms", 0)
     superficie = item.get("size") or item.get("builtArea") or item.get("sizeM2") or item.get("surface", 0)
     zona = item.get("zone") or item.get("municipality") or "Madrid"
-
-    features = item.get("features", [])
-    tags = item.get("tags", [])
-    sub_type = item.get("subType", "")
-    property_type = item.get("propertyType", "")
-    
     item_id_actual = str(item.get("id") or item.get("propertyCode") or "")
 
+    # Convertimos absolutamente todo el objeto a texto en minúsculas sin tildes para no dejar rastro
+    texto_total_plano = quitar_tildes(str(item)).lower()
 
-
-    
-    # CHIVATO FORZADO: Si coincide con el piso o queremos ver los IDs que pasan
-    if item_id_actual == "11219507":
-        print(f"\n[CHIVATO ENCONTRADO] ID 11219507 detectado:", flush=True)
-        print(f" - Features: {features}", flush=True)
-        print(f" - Tags: {tags}", flush=True)
-        print(f" - SubType: {sub_type}", flush=True)
-        print(f" - Objeto completo: {item}\n", flush=True)
-
-    # Extracción mejorada para evitar que saltos de línea rompan frases clave como "nuda propiedad"
-    titulo = str(item.get("title") or item.get("heading") or "")
-    descripcion = str(item.get("description") or item.get("text") or "")
-    texto_bruto = f"{titulo} {descripcion} {str(features)} {str(tags)} {sub_type} {property_type} {str(item)}"
-    texto_completo = " ".join(limpiar_total(texto_bruto).split())
-
-    # CHIVATO: Imprime si contiene algo sospechoso o para ver qué pasó con este piso
-    if "nuda" in texto_completo:
-        print(f"¡DETECTADA PALABRA CLAVE! Texto analizado: {texto_completo}", flush=True)
-
-    if item_id_actual == "112195107":
-        print(f"\n[CHIVATO NADA PROPIEDAD] Objeto completo: {item}\n", flush=True)
+    # CHIVATO: Si en cualquier parte del JSON aparece la palabra "nuda", lo chivamos en consola
+    if "nuda" in texto_total_plano:
+        print(f"\n[CHIVATO NUDA PROPIEDAD] ID: {item_id_actual} pillado con la palabra 'nuda'. Título: {item.get('title')}\n", flush=True)
 
     # 1. Filtro de precio
     if isinstance(precio, (int, float)):
@@ -147,13 +124,17 @@ def procesar_inmueble(item):
 
     # 5. Filtro de barrios excluidos
     for barrio in EXCLUDED_NEIGHBORHOODS:
-        if limpiar_total(barrio) in texto_completo:
+        if quitar_tildes(barrio).lower() in texto_total_plano:
             return False, f"Barrio excluido ({barrio})"
 
-    # 6. Filtro de palabras clave (incluye nuda propiedad, okupa, etc.)
+    # 6. Filtro estricto de palabras clave (con "nuda" radical)
     for kw in EXCLUDE_KEYWORDS:
-        if limpiar_total(kw) in texto_completo:
+        if quitar_tildes(kw).lower() in texto_total_plano:
             return False, f"Término prohibido ({kw})"
+            
+    # Blindaje extra específico para nuda propiedad por si acaso
+    if "nuda" in texto_total_plano:
+        return False, "Término prohibido (nuda propiedad detectada por seguridad)"
 
     # 7. Ubicación objetivo
     if 'TARGET_LOCATIONS' in globals() and TARGET_LOCATIONS:
