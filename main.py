@@ -13,7 +13,7 @@ from extractor import obtener_pisos_desde_json, obtener_pisos_idealista
 
 # 1. Parámetros de filtrado
 PRECIO_MIN = 50000
-PRECIO_MAX = 175000
+PRECIO_MAX = 375000
 SUPERFICIE_MIN = 45.0
 HABITACIONES_MIN = 2
 
