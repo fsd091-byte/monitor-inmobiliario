@@ -1,0 +1,34 @@
+import sqlite3
+import json
+
+# Conectar a tu base de datos local
+conn = sqlite3.connect("inmuebles.db")
+conn.row_factory = sqlite3.Row
+cursor = conn.cursor()
+
+cursor.execute("SELECT * FROM pisos_vistos")
+filas = cursor.fetchall()
+
+pisos_json = []
+for fila in filas:
+    # Mapeamos los campos básicos que tenga tu tabla a lo que espera procesar_inmueble
+    piso = {
+        "propertyCode": str(fila["id"] if "id" in fila.keys() else ""),
+        "price": fila["precio"] if "precio" in fila.keys() else 0,
+        "title": fila["titulo"] if "titulo" in fila.keys() else "Sin título",
+        "zone": fila["zona"] if "zona" in fila.keys() else "Madrid",
+        # Valores por defecto o extraídos si los tienes en la BD para que los filtros no fallen:
+        "size": 80,       # Pon un valor de prueba si no se guardó en esta tabla
+        "rooms": 3,       # Valor de prueba
+        "floor": "2",     # Valor de prueba
+        "hasLift": True,  # Valor de prueba
+        "url": "https://www.idealista.com/"
+    }
+    pisos_json.append(piso)
+
+# Guardar el resultado en pisos_prueba.json
+with open("pisos_prueba.json", "w", encoding="utf-8") as f:
+    json.dump(pisos_json, f, indent=2, ensure_ascii=False)
+
+print(f"¡Exportados {len(pisos_json)} pisos a 'pisos_prueba.json' con éxito!")
+conn.close()
