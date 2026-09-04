@@ -88,21 +88,24 @@ def procesar_inmueble(item):
     zona = item.get("zone") or item.get("municipality") or "Madrid"
     item_id_actual = str(item.get("id") or item.get("propertyCode") or "")
 
-    # Convertimos absolutamente todo el objeto a texto en minúsculas sin tildes para no dejar rastro
+    # 1. Comprobación expresa de las etiquetas (labels) de Idealista (aquí viene 'occupation.bareOwnership')
+    labels = item.get("labels", [])
+    for label in labels:
+        label_text = str(label.get("name", "")) + " " + str(label.get("text", ""))
+        if "bareownership" in quitar_tildes(label_text).lower() or "nuda" in quitar_tildes(label_text).lower():
+            return False, "Término prohibido (etiqueta de nuda propiedad)"
+
+    # Convertimos todo el objeto a texto plano para el filtro general
     texto_total_plano = quitar_tildes(str(item)).lower()
 
-    # CHIVATO: Si en cualquier parte del JSON aparece la palabra "nuda", lo chivamos en consola
-    if "nuda" in texto_total_plano:
-        print(f"\n[CHIVATO NUDA PROPIEDAD] ID: {item_id_actual} pillado con la palabra 'nuda'. Título: {item.get('title')}\n", flush=True)
-
-    # 1. Filtro de precio
+    # 2. Filtro de precio
     if isinstance(precio, (int, float)):
         if not (PRECIO_MIN <= precio <= PRECIO_MAX):
             return False, "Precio fuera de rango"
     else:
         return False, "Precio no disponible"
 
-    # 2. Filtro de superficie mínima
+    # 3. Filtro de superficie mínima
     try:
         superficie_val = float(superficie) if superficie is not None else 0
         if superficie_val < SUPERFICIE_MIN:
@@ -110,7 +113,7 @@ def procesar_inmueble(item):
     except (ValueError, TypeError):
         pass
 
-    # 3. Filtro de habitaciones
+    # 4. Filtro de habitaciones
     try:
         hab_val = int(habitaciones) if habitaciones is not None else 0
         if hab_val < HABITACIONES_MIN:
@@ -118,25 +121,21 @@ def procesar_inmueble(item):
     except (ValueError, TypeError):
         pass
 
-    # 4. Filtro de ascensor (plantas 2ª o superiores)
+    # 5. Filtro de ascensor (plantas 2ª o superiores)
     if planta.isdigit() and int(planta) >= 2 and not tiene_ascensor:
         return False, "Planta alta sin ascensor"
 
-    # 5. Filtro de barrios excluidos
+    # 6. Filtro de barrios excluidos
     for barrio in EXCLUDED_NEIGHBORHOODS:
         if quitar_tildes(barrio).lower() in texto_total_plano:
             return False, f"Barrio excluido ({barrio})"
 
-    # 6. Filtro estricto de palabras clave (con "nuda" radical)
+    # 7. Filtro de palabras clave
     for kw in EXCLUDE_KEYWORDS:
         if quitar_tildes(kw).lower() in texto_total_plano:
             return False, f"Término prohibido ({kw})"
-            
-    # Blindaje extra específico para nuda propiedad por si acaso
-    if "nuda" in texto_total_plano:
-        return False, "Término prohibido (nuda propiedad detectada por seguridad)"
 
-    # 7. Ubicación objetivo
+    # 8. Ubicación objetivo
     if 'TARGET_LOCATIONS' in globals() and TARGET_LOCATIONS:
         zona_limpia = quitar_tildes(zona)
         if zona_limpia != "madrid":
