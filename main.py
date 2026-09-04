@@ -82,8 +82,10 @@ def procesar_inmueble(item):
     # 0. BLINDAJE RADICAL ANTINUDA Y PROHIBIDAS: Análisis de texto bruto antes de cualquier otro filtro
     texto_bruto_global = quitar_tildes(str(item)).lower()
     
-    # Comprobación directa de cada palabra prohibida
-    for kw in EXCLUDE_KEYWORDS:
+    # Añadimos las palabras clave críticas directamente para barrerlas de forma literal
+    palabras_extra_criticas = ["nuda propiedad", "nuda-propiedad", "nudapropiedad", "usufructo", "solo inversores"]
+    
+    for kw in EXCLUDE_KEYWORDS + palabras_extra_criticas:
         kw_limpia = quitar_tildes(kw).lower()
         if kw_limpia in texto_bruto_global:
             return False, f"Término prohibido estricto ({kw})"
@@ -92,7 +94,7 @@ def procesar_inmueble(item):
     labels = item.get("labels", [])
     for label in labels:
         label_str = quitar_tildes(str(label)).lower()
-        if "nuda" in label_str or "bareownership" in label_str or "ocupado" in label_str:
+        if "nuda" in label_str or "bareownership" in label_str or "ocupado" in label_str or "inversor" in label_str:
             return False, "Término prohibido por etiqueta técnica"
 
     precio = item.get("price")
@@ -144,6 +146,7 @@ def procesar_inmueble(item):
                 return False, "Zona no objetivo"
 
     return True, "Cumple filtros"
+    
     
 def ejecutar_proceso():
     # 1. Inicializar la base de datos y obtener inmuebles de Apify
