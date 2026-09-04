@@ -5,7 +5,7 @@ import sqlite3
 def obtener_pisos_desde_db(db_path="inmuebles.db"):
     """
     Lee todos los inmuebles guardados históricamente en la base de datos
-    para usarlos como banco de pruebas offline.
+    detectando automáticamente el nombre de la tabla.
     """
     print(f"🗄️ [MODO OFFLINE DB] Leyendo inmuebles desde la base de datos '{db_path}'...")
     try:
@@ -13,8 +13,20 @@ def obtener_pisos_desde_db(db_path="inmuebles.db"):
         conn.row_factory = sqlite3.Row  # Para acceder a las columnas por nombre
         cursor = conn.cursor()
         
-        # Ajusta el nombre de la tabla si en tu gestor_db se llama diferente (ej. 'inmuebles' o 'pisos')
-        cursor.execute("SELECT * FROM inmuebles") 
+        # Buscar automáticamente el nombre de la tabla en la base de datos
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tablas = cursor.fetchall()
+        
+        if not tablas:
+            print("⚠️ No se encontraron tablas en la base de datos.")
+            conn.close()
+            return []
+            
+        # Selecciona la primera tabla que encuentre
+        nombre_tabla = tablas[0]['name']
+        print(f"📂 Tabla detectada automáticamente: '{nombre_tabla}'")
+        
+        cursor.execute(f"SELECT * FROM {nombre_tabla}")
         filas = cursor.fetchall()
         
         pisos = [dict(fila) for fila in filas]
@@ -25,7 +37,7 @@ def obtener_pisos_desde_db(db_path="inmuebles.db"):
     except Exception as e:
         print(f"⚠️ Error al leer la base de datos: {e}")
         return []
-
+        
 APIFY_TOKEN = os.getenv("APIFY_TOKEN", "")
 
 """ conexion real
