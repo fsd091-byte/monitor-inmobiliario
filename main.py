@@ -115,6 +115,9 @@ def procesar_inmueble(item):
     if "nuda" in texto_completo:
         print(f"¡DETECTADA PALABRA CLAVE! Texto analizado: {texto_completo}", flush=True)
 
+    if item_id_actual == "112195107":
+        print(f"\n[CHIVATO NADA PROPIEDAD] Objeto completo: {item}\n", flush=True)
+
     # 1. Filtro de precio
     if isinstance(precio, (int, float)):
         if not (PRECIO_MIN <= precio <= PRECIO_MAX):
