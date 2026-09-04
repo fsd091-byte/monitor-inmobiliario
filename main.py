@@ -156,9 +156,11 @@ def procesar_inmueble(item):
 def ejecutar_proceso():
     # 1. Inicializar la base de datos y obtener inmuebles de Apify
     gestor_db.inicializar_base_datos()
+    
     # resultados_apify = obtener_pisos_idealista()
     # Usa esto mientras estemos probando con la base de datos histórica:
-    resultados_apify = obtener_pisos_desde_db()
+    # resultados_apify = obtener_pisos_desde_db()
+    resultados_apify = obtener_pisos_desde_json()
 
     inmuebles_aceptados = []
 
