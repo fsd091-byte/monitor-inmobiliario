@@ -2,6 +2,27 @@ import os
 from apify_client import ApifyClient
 import sqlite3
 
+import json
+import os
+
+def obtener_pisos_desde_json(json_path="pisos_prueba.json"):
+    """
+    Lee los inmuebles de prueba desde un archivo JSON local para pruebas offline.
+    """
+    print(f"📂 [MODO OFFLINE JSON] Leyendo inmuebles desde '{json_path}'...")
+    if not os.path.exists(json_path):
+        print(f"⚠️ El archivo '{json_path}' no existe en el repositorio.")
+        return []
+        
+    try:
+        with open(json_path, "r", encoding="utf-8") as f:
+            pisos = json.load(f)
+        print(f"✓ {len(pisos)} pisos cargados desde el JSON para pruebas.")
+        return pisos
+    except Exception as e:
+        print(f"⚠️ Error al leer el archivo JSON: {e}")
+        return []
+        
 def obtener_pisos_desde_db(db_path="inmuebles.db"):
     """
     Lee todos los inmuebles guardados históricamente en la base de datos
