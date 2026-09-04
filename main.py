@@ -180,14 +180,12 @@ def ejecutar_proceso():
         
         es_valido, motivo = procesar_inmueble(item)
         
-        es_valido, motivo = procesar_inmueble(item)
-        
         if es_valido:
             item_id = str(item.get("id") or item.get("propertyCode") or "")
             
             # Comprobar en la BD si ya se notificó anteriormente
-            if gestor_db.ya_fue_visto(item_id):
-                continue
+            # if gestor_db.ya_fue_visto(item_id):
+            #    continue
 
             inmuebles_aceptados.append(item)
             
