@@ -8,6 +8,7 @@ import notificador
 import gestor_db
 import json
 import unicodedata
+from extractor import obtener_pisos_desde_db, obtener_pisos_idealista
 
 # 1. Parámetros de filtrado
 PRECIO_MIN = 50000
