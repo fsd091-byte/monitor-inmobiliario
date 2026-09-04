@@ -12,7 +12,7 @@ def enviar_alerta_piso(piso_analizado):
     tamano = piso_analizado.get('size', 'N/A')
     habitaciones = piso_analizado.get('rooms', 'N/A')
     planta = piso_analizado.get('floor', 'N/A')
-    url = piso_analizado.get('url', '')
+    url_inmueble = piso_analizado.get('url', '')  # <--- Usamos un nombre único
 
     mensaje = (
         f"🏠 *{titulo}*\n\n"
@@ -21,10 +21,10 @@ def enviar_alerta_piso(piso_analizado):
         f"📐 *Superficie:* {tamano} m²\n"
         f"🛏 *Habitaciones:* {habitaciones}\n"
         f"🏢 *Planta:* {planta}\n\n"
-        f"🔗 [Ver en Idealista]({url})"
+        f"🔗 [Ver en Idealista]({url_inmueble})"  # <--- Apuntamos a la variable correcta
     )
     
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    telegram_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"  # <--- Variable separada para la API
     payload = {
         "chat_id": TELEGRAM_CHAT_ID,
         "text": mensaje,
@@ -32,10 +32,11 @@ def enviar_alerta_piso(piso_analizado):
     }
     
     try:
-        response = requests.post(url, json=payload)
+        response = requests.post(telegram_url, json=payload)  # <--- Usamos la variable de Telegram
         if response.status_code == 200:
             print("✓ Alerta enviada a tu Telegram con éxito.")
         else:
             print(f"❌ Error al enviar a Telegram: {response.text}")
     except Exception as e:
         print(f"❌ Error de conexión al notificar: {e}")
+        
