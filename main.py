@@ -102,16 +102,20 @@ def procesar_inmueble(item):
         print(f" - SubType: {sub_type}", flush=True)
         print(f" - Objeto completo: {item}\n", flush=True)
 
-    texto_completo = limpiar_total(f"{str(item)} {str(features)} {str(tags)} {sub_type} {property_type}")
+    # Extracción mejorada para evitar que saltos de línea rompan frases clave como "nuda propiedad"
+    titulo = str(item.get("title") or item.get("heading") or "")
+    descripcion = str(item.get("description") or item.get("text") or "")
+    texto_bruto = f"{titulo} {descripcion} {str(features)} {str(tags)} {sub_type} {property_type} {str(item)}"
+    texto_completo = " ".join(limpiar_total(texto_bruto).split())
 
-    # 1. Filtro de precio (50k - 175k)
+    # 1. Filtro de precio
     if isinstance(precio, (int, float)):
         if not (PRECIO_MIN <= precio <= PRECIO_MAX):
             return False, "Precio fuera de rango"
     else:
         return False, "Precio no disponible"
 
-    # 2. Filtro de superficie mínima (45 m²)
+    # 2. Filtro de superficie mínima
     try:
         superficie_val = float(superficie) if superficie is not None else 0
         if superficie_val < SUPERFICIE_MIN:
@@ -119,7 +123,7 @@ def procesar_inmueble(item):
     except (ValueError, TypeError):
         pass
 
-    # 3. Filtro de habitaciones (mínimo 2)
+    # 3. Filtro de habitaciones
     try:
         hab_val = int(habitaciones) if habitaciones is not None else 0
         if hab_val < HABITACIONES_MIN:
@@ -136,7 +140,7 @@ def procesar_inmueble(item):
         if limpiar_total(barrio) in texto_completo:
             return False, f"Barrio excluido ({barrio})"
 
-    # 6. Filtro de palabras clave
+    # 6. Filtro de palabras clave (incluye nuda propiedad, okupa, etc.)
     for kw in EXCLUDE_KEYWORDS:
         if limpiar_total(kw) in texto_completo:
             return False, f"Término prohibido ({kw})"
@@ -150,7 +154,7 @@ def procesar_inmueble(item):
                 return False, "Zona no objetivo"
 
     return True, "Cumple filtros"
-
+    
 
 
 
