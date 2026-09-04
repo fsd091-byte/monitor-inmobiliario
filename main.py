@@ -156,7 +156,7 @@ def ejecutar_proceso():
     gestor_db.inicializar_base_datos()
     
     resultados_apify = obtener_pisos_desde_json()
-
+    
     print("TIPO DE DATO:", type(resultados_apify[0]))
     print("EJEMPLO PLANO:", str(resultados_apify[0])[:200])
 
@@ -167,6 +167,10 @@ def ejecutar_proceso():
     print("="*80)
 
     for item in resultados_apify:
+        
+        if item in ["112201296", "112195107"]:
+            print(f"🔍 [CHIVATO TEXTO {item_id_actual}]: {texto_bruto_global[:400]}...")
+    
         es_valido, motivo = procesar_inmueble(item)
         
         if not es_valido:
