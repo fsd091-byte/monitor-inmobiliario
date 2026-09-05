@@ -46,14 +46,6 @@ EXCLUDED_NEIGHBORHOODS = [
     "villaverde"
 ]
 
-EXCLUDE_KEYWORDS = [
-    "ocupado", "okupado", "sin posesion", "sin posesión", "Ocupada ilegalmente","Ocupada","OCUPADO",
-    "proindiviso", "subasta", "cesion de remate", "cesión de remate",
-    "nuda propiedad", "nuda-propiedad", "nudapropiedad",
-    "renta antigua", "sin cedula", "sin cédula"
-]
-
-
 def quitar_tildes(texto):
     if not texto:
         return ""
@@ -95,17 +87,7 @@ def procesar_inmueble(item):
     # =========================================================================
     # 2. FILTROS DE TEXTO CRÍTICOS (Nuda propiedad, alquilada, ocupada, inversores)
     # =========================================================================
-    terminos_prohibidos = [
-        "nuda propiedad", 
-        "alquilada", 
-        "alquilado", 
-        "ocupada", 
-        "ocupado", 
-        "okupa", 
-        "solo inversores", 
-        "exclusivamente inversores",
-        "rentabilidad"
-    ]
+    terminos_prohibidos = EXCLUDE_KEYWORDS
     
     for termino in terminos_prohibidos:
         if termino in texto_global:
