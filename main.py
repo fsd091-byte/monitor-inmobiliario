@@ -91,8 +91,7 @@ def procesar_inmueble(item):
         kw_limpia = quitar_tildes(kw).lower()
         if kw_limpia in texto_bruto_global:
             return False, f"Término prohibido estricto ({kw})"
-    if item_id_actual == "112201296":
-        print(f"🚨 [INSPECCIÓN FORENSE 112201296]: {item}")        
+      
 
     # Comprobación extra por si viene en etiquetas técnicas (labels o occupation)
     labels = item.get("labels", [])
@@ -174,6 +173,9 @@ def ejecutar_proceso():
         
         if item in ["112201296", "112195107"]:
             print(f"🔍 [CHIVATO TEXTO {item_id_actual}]: {texto_bruto_global[:400]}...")
+
+        if item == "112201296":
+            print(f"🚨 [INSPECCIÓN FORENSE 112201296]: {item}")  
     
         es_valido, motivo = procesar_inmueble(item)
         
