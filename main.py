@@ -87,7 +87,12 @@ def procesar_inmueble(item):
     # =========================================================================
     # 2. FILTROS DE TEXTO CRÍTICOS (Nuda propiedad, alquilada, ocupada, inversores)
     # =========================================================================
-    terminos_prohibidos = EXCLUDE_KEYWORDS
+    terminos_prohibidos =  [
+        "Alquilada",
+        "Nuda", 
+        "Ocupada",
+        "villaverde"
+    ]
     
     for termino in terminos_prohibidos:
         if termino in texto_global:
