@@ -94,8 +94,12 @@ def procesar_inmueble(item):
     # =========================================================================
     # 3. FILTRO DE BARRIO / ZONA: Excluir Puente de Vallecas
     # =========================================================================
-    if "vallecas" in zona or "puente de vallecas" in zona:
-        return False, "Descartado: Barrio Puente de Vallecas excluido"
+
+    zonas_prohibidas = ["san cristobal", "vallecas", "puente de vallecas", "villaverde", "entrevias", "entrevías"]
+    
+    if any(z in zona or z in texto_completo for z in zonas_prohibidas): 
+        return False, "Descartado: Zona prohibida"
+        
 
     # =========================================================================
     # 4. FILTRO DE PLANTA: Quitar bajos / plantas bajas
