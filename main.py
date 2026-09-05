@@ -61,16 +61,15 @@ def procesar_inmueble(item):
     planta = str(item.get('floor', '')).lower().strip()
     zona = str(item.get('zone', '')).lower()
     
-    # Extracción de campos de texto específicos y texto global para análisis profundo
-    texto_global = str(item).lower()
+    # Extraemos únicamente los campos de texto del anuncio de forma limpia
     titulo = str(item.get('title', '')).lower()
     descripcion = str(item.get('description', '')).lower()
     subtitulo = str(item.get('subTitle', '')).lower()
     comentario = str(item.get('comment', '')).lower()
     features = str(item.get('features', '')).lower()
     
-    # Unificamos todo el texto sospechoso incluyendo título y descripción para blindar la búsqueda
-    texto_completo = f"{texto_global} {titulo} {descripcion} {subtitulo} {comentario} {features}".replace("*", " ")
+    # Juntamos solo los textos informativos del piso (aquí ya viaja de lleno la descripción)
+    texto_completo = f"{titulo} {descripcion} {subtitulo} {comentario} {features}".replace("*", " ")
 
     # =========================================================================
     # 2. FILTROS DE TEXTO CRÍTICOS (Ocupados, alquilados, nuda propiedad, etc.)
@@ -96,12 +95,11 @@ def procesar_inmueble(item):
     # =========================================================================
     # 3. FILTRO DE BARRIO / ZONA: Excluir zonas no deseadas
     # =========================================================================
-
     zonas_prohibidas = ["san cristobal", "cristóbal", "vallecas", "puente de vallecas", "villaverde", "entrevias", "entrevías"]
     
     if any(z in zona or z in texto_completo for z in zonas_prohibidas): 
         return False, "Descartado: Zona prohibida"
-        
+
     # =========================================================================
     # 4. FILTRO DE PLANTA: Quitar bajos / plantas bajas
     # =========================================================================
