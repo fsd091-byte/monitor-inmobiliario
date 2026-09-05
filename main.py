@@ -1,17 +1,17 @@
 import os
 import requests
 import sqlite3
-from extractor import obtener_pisos_idealista 
-from notificador import enviar_alerta_piso
-import extractor
-import notificador
-import gestor_db
 import json
 import unicodedata
-from extractor import obtener_pisos_desde_db, obtener_pisos_idealista
-from extractor import obtener_pisos_desde_json, obtener_pisos_idealista
+import re
+import sys
 
-# 1. Parámetros de filtrado
+from extractor import obtener_pisos_desde_db, obtener_pisos_idealista, obtener_pisos_desde_json
+from notificador import enviar_alerta_piso
+import gestor_db
+import notificador
+
+# 1. Parámetros de filtrado numérico y zonas generales
 PRECIO_MIN = 50000
 PRECIO_MAX = 975000
 SUPERFICIE_MIN = 45.0
@@ -24,7 +24,6 @@ TARGET_LOCATIONS = [
     "coslada", "san fernando de henares",
     "rivas", "rivas-vaciamadrid",
     "guadalajara", "azuqueca", "azuqueca de henares",
-    "San Cristóbal",
     
     # Sur de Madrid
     "getafe", "móstoles", "mostoles", 
@@ -37,15 +36,6 @@ TARGET_LOCATIONS = [
     "madrid"
 ]
 
-# Lista de barrios o zonas a excluir (en minúsculas y sin tildes para simplificar)
-EXCLUDED_NEIGHBORHOODS = [
-    "san cristobal",
-    "la canada real", "canada real",
-    "el pozo del tio raimundo", "pozo del tio raimundo",
-    "entrrevias", "entrevias",
-    "villaverde"
-]
-
 def quitar_tildes(texto):
     if not texto:
         return ""
@@ -55,21 +45,12 @@ def quitar_tildes(texto):
         if unicodedata.category(c) != 'Mn'
     ).lower()
 
-
-import re
-
 def limpiar_total(texto):
     if not texto:
         return ""
-    # Quita tildes y pasa a minúsculas
-    texto_base = ''.join(
-        c for c in unicodedata.normalize('NFD', str(texto))
-        if unicodedata.category(c) != 'Mn'
-    ).lower()
+    texto_base = quitar_tildes(str(texto))
     # Elimina espacios, guiones y cualquier carácter que no sea letra o número
     return re.sub(r'[^a-z0-9]', '', texto_base)
-
-import sys
 
 def procesar_inmueble(item):
     # 1. Extracción de campos clave del diccionario
@@ -78,65 +59,71 @@ def procesar_inmueble(item):
     superficie = item.get('size', 0)
     habitaciones = item.get('rooms', 0)
     planta = str(item.get('floor', '')).lower().strip()
-    tiene_ascensor = item.get('hasLift', False)
     zona = str(item.get('zone', '')).lower()
     
-    # Texto global para búsqueda de términos prohibidos (títulos, descripciones, subtítulos, etc.)
+    # Extracción de campos de texto específicos y texto global para análisis profundo
     texto_global = str(item).lower()
+    subtitulo = str(item.get('subTitle', '')).lower()
+    comentario = str(item.get('comment', '')).lower()
+    features = str(item.get('features', '')).lower()
+    
+    # Unificamos todo el texto sospechoso para blindar la búsqueda
+    texto_completo = f"{texto_global} {subtitulo} {comentario} {features}".replace("*", " ")
 
     # =========================================================================
-    # 2. FILTROS DE TEXTO CRÍTICOS (Nuda propiedad, alquilada, ocupada, inversores)
+    # 2. FILTROS DE TEXTO CRÍTICOS (Ocupados, alquilados, nuda propiedad, etc.)
     # =========================================================================
-    terminos_prohibidos =  [
-        "Alquilada",
-        "Nuda", 
-        "Ocupada",
-        "villaverde"
+    terminos_prohibidos = [
+        "nuda propiedad", 
+        "alquilada", 
+        "alquilado", 
+        "ocupada", 
+        "ocupado", 
+        "okupa", 
+        "no visitable",
+        "sin posesión",
+        "solo inversores", 
+        "exclusivamente inversores",
+        "rentabilidad"
     ]
     
     for termino in terminos_prohibidos:
-        if termino in texto_global:
+        if termino in texto_completo:
             return False, f"Término prohibido estricto: {termino}"
 
     # =========================================================================
-    # 3. FILTRO DE BARRIO: Excluir Puente de Vallecas
+    # 3. FILTRO DE BARRIO / ZONA: Excluir Puente de Vallecas
     # =========================================================================
     if "vallecas" in zona or "puente de vallecas" in zona:
         return False, "Descartado: Barrio Puente de Vallecas excluido"
 
     # =========================================================================
-    # 4. FILTRO DE PLANTA: Quitar bajos / plantas bajas (si aplica)
+    # 4. FILTRO DE PLANTA: Quitar bajos / plantas bajas
     # =========================================================================
-    # Si 'planta' es 'bj', 'bajo' o '0', lo descartamos con esta regla:
     if planta in ['bj', 'bajo', '0', 'semisótano', 'ss']:
         return False, "Descartado: Planta baja / bajo no deseado"
 
     # =========================================================================
-    # 5. TUS OTROS FILTROS NUMÉRICOS (Precio, superficie, habitaciones, etc.)
+    # 5. FILTROS NUMÉRICOS (Precio, superficie, habitaciones)
     # =========================================================================
-    # Ejemplo de validaciones estándar (ajústalas a tus límites de siempre):
-    if superficie < 45:
+    if precio < PRECIO_MIN or precio > PRECIO_MAX:
+        return False, "Fuera de rango de precio"
+
+    if superficie < SUPERFICIE_MIN:
         return False, "Superficie insuficiente"
         
-    if habitaciones < 2:
+    if habitaciones < HABITACIONES_MIN:
         return False, "Habitaciones insuficientes"
 
-    # Si pasa todas las murallas, se aprueba
+    # Si supera todos los filtros, se aprueba
     return True, "Cumple todos los filtros"
-    
     
 def ejecutar_proceso():
 
-
-
-    # 1. Inicializar la base de datos y obtener inmuebles de Apify
+    # 1. Inicializar la base de datos y obtener inmuebles
     gestor_db.inicializar_base_datos()
-    
     resultados_apify = obtener_pisos_desde_json()
     
-    print("TIPO DE DATO:", type(resultados_apify[0]))
-    print("EJEMPLO PLANO:", str(resultados_apify[0])[:200])
-
     inmuebles_aceptados = []
 
     print("\n" + "="*80)
@@ -145,24 +132,19 @@ def ejecutar_proceso():
 
     for item in resultados_apify:
         
-        if item in ["112201296", "112195107"]:
-            print(f"🔍 [CHIVATO TEXTO {item_id_actual}]: {texto_bruto_global[:400]}...")
-
-        if item == "112201296":
-            print(f"🚨 [INSPECCIÓN FORENSE 112201296]: {item}")  
-    
-        es_valido, motivo = procesar_inmueble(item)
-        
-        if not es_valido:
-            print(f"❌ Descartado ID {item.get('id', 'N/A')}: {motivo}")
-            continue
-            
         item_id = str(item.get("id") or item.get("propertyCode") or "")
 
         # Comprobar en la BD si ya se notificó anteriormente para saltarlo
         if gestor_db.ya_fue_visto(item_id):
             continue
             
+        # Evaluar contra las reglas de negocio y filtros
+        es_valido, motivo = procesar_inmueble(item)
+        if not es_valido:
+            # Opcional: puedes descomentar la línea de abajo si quieres ver en consola por qué se descarta cada uno
+            # print(f"❌ Descartado ID {item_id}: {motivo}")
+            continue
+        
         print(f"✅ ¡APROBADO! ID {item_id}")
         inmuebles_aceptados.append(item)
         
@@ -183,13 +165,14 @@ def ejecutar_proceso():
         try:
             enviar_alerta_piso(item)
             gestor_db.guardar_piso_visto(item_id, titulo, precio, zona)
+            print("✓ Alerta enviada a tu Telegram con éxito.")
+            print(f"  └─ Registro guardado en BD: {item_id}")
         except Exception as e:
             print(f"⚠️ Error enviando notificación para ID {item_id}: {e}")
 
     print("="*80)
     print(f" Total inmuebles nuevos notificados: {len(inmuebles_aceptados)}")
     print("="*80 + "\n")
-    
 
 if __name__ == "__main__":
     ejecutar_proceso()
