@@ -46,11 +46,10 @@ EXCLUDED_NEIGHBORHOODS = [
 ]"OCUPADO"
 
 EXCLUDE_KEYWORDS = [
-    "ocupado", "okupado", "sin posesion", "sin posesión",
+    "ocupado", "okupado", "sin posesion", "sin posesión", "Ocupada ilegalmente","Ocupada","OCUPADO",
     "proindiviso", "subasta", "cesion de remate", "cesión de remate",
     "nuda propiedad", "nuda-propiedad", "nudapropiedad",
-    "renta antigua", "sin cedula", "sin cédula",
-    "Ocupada ilegalmente","Ocupada","OCUPADO"
+    "renta antigua", "sin cedula", "sin cédula"
 ]
 
 
