@@ -79,6 +79,8 @@ def limpiar_total(texto):
 import sys
 
 def procesar_inmueble(item):
+
+    
     # 0. BLINDAJE RADICAL ANTINUDA Y PROHIBIDAS: Análisis de texto bruto antes de cualquier otro filtro
     texto_bruto_global = quitar_tildes(str(item)).lower()
     
@@ -89,6 +91,8 @@ def procesar_inmueble(item):
         kw_limpia = quitar_tildes(kw).lower()
         if kw_limpia in texto_bruto_global:
             return False, f"Término prohibido estricto ({kw})"
+    if item_id_actual == "112201296":
+        print(f"🚨 [INSPECCIÓN FORENSE 112201296]: {item}")        
 
     # Comprobación extra por si viene en etiquetas técnicas (labels o occupation)
     labels = item.get("labels", [])
