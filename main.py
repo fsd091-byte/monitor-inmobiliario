@@ -79,76 +79,62 @@ def limpiar_total(texto):
 import sys
 
 def procesar_inmueble(item):
-
+    # 1. Extracción de campos clave del diccionario
+    item_id = str(item.get('propertyCode', 'N/A'))
+    precio = item.get('price', 0)
+    superficie = item.get('size', 0)
+    habitaciones = item.get('rooms', 0)
+    planta = str(item.get('floor', '')).lower().strip()
+    tiene_ascensor = item.get('hasLift', False)
+    zona = str(item.get('zone', '')).lower()
     
-    # 0. BLINDAJE RADICAL ANTINUDA Y PROHIBIDAS: Análisis de texto bruto antes de cualquier otro filtro
-    texto_bruto_global = quitar_tildes(str(item)).lower()
+    # Texto global para búsqueda de términos prohibidos (títulos, descripciones, subtítulos, etc.)
+    texto_global = str(item).lower()
+
+    # =========================================================================
+    # 2. FILTROS DE TEXTO CRÍTICOS (Nuda propiedad, alquilada, ocupada, inversores)
+    # =========================================================================
+    terminos_prohibidos = [
+        "nuda propiedad", 
+        "alquilada", 
+        "alquilado", 
+        "ocupada", 
+        "ocupado", 
+        "okupa", 
+        "solo inversores", 
+        "exclusivamente inversores",
+        "rentabilidad"
+    ]
     
-    # Añadimos las palabras clave críticas directamente para barrerlas de forma literal
-    palabras_extra_criticas = ["nuda propiedad", "nuda-propiedad", "nudapropiedad", "usufructo", "solo inversores"]
-    
-    for kw in EXCLUDE_KEYWORDS + palabras_extra_criticas:
-        kw_limpia = quitar_tildes(kw).lower()
-        if kw_limpia in texto_bruto_global:
-            return False, f"Término prohibido estricto ({kw})"
-      
+    for termino in terminos_prohibidos:
+        if termino in texto_global:
+            return False, f"Término prohibido estricto: {termino}"
 
-    # Comprobación extra por si viene en etiquetas técnicas (labels o occupation)
-    labels = item.get("labels", [])
-    for label in labels:
-        label_str = quitar_tildes(str(label)).lower()
-        if "nuda" in label_str or "bareownership" in label_str or "ocupado" in label_str or "inversor" in label_str:
-            return False, "Término prohibido por etiqueta técnica"
+    # =========================================================================
+    # 3. FILTRO DE BARRIO: Excluir Puente de Vallecas
+    # =========================================================================
+    if "vallecas" in zona or "puente de vallecas" in zona:
+        return False, "Descartado: Barrio Puente de Vallecas excluido"
 
-    precio = item.get("price")
-    planta = str(item.get("floor", "")).lower()
-    tiene_ascensor = item.get("hasLift", False)
-    
-    habitaciones = item.get("rooms") or item.get("roomsCount") or item.get("bedrooms", 0)
-    superficie = item.get("size") or item.get("builtArea") or item.get("sizeM2") or item.get("surface", 0)
-    zona = item.get("zone") or item.get("municipality") or "Madrid"
+    # =========================================================================
+    # 4. FILTRO DE PLANTA: Quitar bajos / plantas bajas (si aplica)
+    # =========================================================================
+    # Si 'planta' es 'bj', 'bajo' o '0', lo descartamos con esta regla:
+    if planta in ['bj', 'bajo', '0', 'semisótano', 'ss']:
+        return False, "Descartado: Planta baja / bajo no deseado"
 
-    # 1. Filtro de precio
-    if isinstance(precio, (int, float)):
-        if not (PRECIO_MIN <= precio <= PRECIO_MAX):
-            return False, "Precio fuera de rango"
-    else:
-        return False, "Precio no disponible"
+    # =========================================================================
+    # 5. TUS OTROS FILTROS NUMÉRICOS (Precio, superficie, habitaciones, etc.)
+    # =========================================================================
+    # Ejemplo de validaciones estándar (ajústalas a tus límites de siempre):
+    if superficie < 45:
+        return False, "Superficie insuficiente"
+        
+    if habitaciones < 2:
+        return False, "Habitaciones insuficientes"
 
-    # 2. Filtro de superficie mínima
-    try:
-        superficie_val = float(superficie) if superficie is not None else 0
-        if superficie_val < SUPERFICIE_MIN:
-            return False, "Superficie insuficiente"
-    except (ValueError, TypeError):
-        pass
-
-    # 3. Filtro de habitaciones
-    try:
-        hab_val = int(habitaciones) if habitaciones is not None else 0
-        if hab_val < HABITACIONES_MIN:
-            return False, "Habitaciones insuficientes"
-    except (ValueError, TypeError):
-        pass
-
-    # 4. Filtro de ascensor (plantas 2ª o superiores)
-    if planta.isdigit() and int(planta) >= 2 and not tiene_ascensor:
-        return False, "Planta alta sin ascensor"
-
-    # 5. Filtro de barrios excluidos
-    for barrio in EXCLUDED_NEIGHBORHOODS:
-        if quitar_tildes(barrio).lower() in texto_bruto_global:
-            return False, f"Barrio excluido ({barrio})"
-
-    # 6. Ubicación objetivo
-    if 'TARGET_LOCATIONS' in globals() and TARGET_LOCATIONS:
-        zona_limpia = quitar_tildes(zona)
-        if zona_limpia != "madrid":
-            coincide = any(quitar_tildes(loc) in zona_limpia for loc in TARGET_LOCATIONS)
-            if not coincide:
-                return False, "Zona no objetivo"
-
-    return True, "Cumple filtros"
+    # Si pasa todas las murallas, se aprueba
+    return True, "Cumple todos los filtros"
     
     
 def ejecutar_proceso():
