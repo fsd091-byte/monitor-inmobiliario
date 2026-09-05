@@ -63,12 +63,14 @@ def procesar_inmueble(item):
     
     # Extracción de campos de texto específicos y texto global para análisis profundo
     texto_global = str(item).lower()
+    titulo = str(item.get('title', '')).lower()
+    descripcion = str(item.get('description', '')).lower()
     subtitulo = str(item.get('subTitle', '')).lower()
     comentario = str(item.get('comment', '')).lower()
     features = str(item.get('features', '')).lower()
     
-    # Unificamos todo el texto sospechoso para blindar la búsqueda
-    texto_completo = f"{texto_global} {subtitulo} {comentario} {features}".replace("*", " ")
+    # Unificamos todo el texto sospechoso incluyendo título y descripción para blindar la búsqueda
+    texto_completo = f"{texto_global} {titulo} {descripcion} {subtitulo} {comentario} {features}".replace("*", " ")
 
     # =========================================================================
     # 2. FILTROS DE TEXTO CRÍTICOS (Ocupados, alquilados, nuda propiedad, etc.)
@@ -92,15 +94,14 @@ def procesar_inmueble(item):
             return False, f"Término prohibido estricto: {termino}"
 
     # =========================================================================
-    # 3. FILTRO DE BARRIO / ZONA: Excluir Puente de Vallecas
+    # 3. FILTRO DE BARRIO / ZONA: Excluir zonas no deseadas
     # =========================================================================
 
-    zonas_prohibidas = ["san cristobal","ristóbal", "vallecas", "puente de vallecas", "villaverde", "entrevias", "entrevías"]
+    zonas_prohibidas = ["san cristobal", "cristóbal", "vallecas", "puente de vallecas", "villaverde", "entrevias", "entrevías"]
     
     if any(z in zona or z in texto_completo for z in zonas_prohibidas): 
         return False, "Descartado: Zona prohibida"
         
-
     # =========================================================================
     # 4. FILTRO DE PLANTA: Quitar bajos / plantas bajas
     # =========================================================================
