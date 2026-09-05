@@ -24,6 +24,7 @@ TARGET_LOCATIONS = [
     "coslada", "san fernando de henares",
     "rivas", "rivas-vaciamadrid",
     "guadalajara", "azuqueca", "azuqueca de henares",
+    "San Cristóbal",
     
     # Sur de Madrid
     "getafe", "móstoles", "mostoles", 
