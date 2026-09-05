@@ -43,13 +43,14 @@ EXCLUDED_NEIGHBORHOODS = [
     "el pozo del tio raimundo", "pozo del tio raimundo",
     "entrrevias", "entrevias",
     "villaverde"
-]
+]"OCUPADO"
 
 EXCLUDE_KEYWORDS = [
     "ocupado", "okupado", "sin posesion", "sin posesión",
     "proindiviso", "subasta", "cesion de remate", "cesión de remate",
     "nuda propiedad", "nuda-propiedad", "nudapropiedad",
-    "renta antigua", "sin cedula", "sin cédula"
+    "renta antigua", "sin cedula", "sin cédula",
+    "Ocupada ilegalmente","Ocupada","OCUPADO"
 ]
 
 
