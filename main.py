@@ -118,7 +118,8 @@ def procesar_inmueble(item):
     if habitaciones < HABITACIONES_MIN:
         return False, "Habitaciones insuficientes"
 
-    # Si supera todos los filtros, se aprueba
+    # Si supera todos los filtros, se aprueba y sacamos traza
+    print(f"📄 [{item_id}] Texto analizado ({len(texto_completo)} chars): {texto_completo[:100]}...")
     return True, "Cumple todos los filtros"
     
 
