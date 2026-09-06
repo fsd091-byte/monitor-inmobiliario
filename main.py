@@ -12,8 +12,8 @@ import gestor_db
 import notificador
 
 # 1. Parámetros de filtrado numérico y zonas generales
-PRECIO_MIN = 50000
-PRECIO_MAX = 975000
+PRECIO_MIN = 75000
+PRECIO_MAX = 175000
 SUPERFICIE_MIN = 45.0
 HABITACIONES_MIN = 2
 
