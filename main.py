@@ -62,22 +62,13 @@ def procesar_inmueble(item):
     planta = str(item.get('floor', '')).lower().strip()
     zona = str(item.get('zone', '')).lower()
     
-    # Extracción automática y segura de CUALQUIER texto dentro del diccionario del inmueble
-    textos_extraidos = []
-    for val in item.values():
-        if isinstance(val, str):
-            textos_extraidos.append(val)
-        elif isinstance(val, dict):
-            for sub_val in val.values():
-                if isinstance(sub_val, str):
-                    textos_extraidos.append(sub_val)
-                    
-    texto_bruto = " ".join(textos_extraidos).replace("*", " ")
+    # Extraemos el title y la descripción por si acaso viene cualquiera de los dos
+    titulo = str(item.get('title') or '')
+    descripcion = str(item.get('description') or '')
+    
+    # Juntamos todo lo que tenga texto para analizarlo a fondo
+    texto_bruto = f"{titulo} {descripcion} {zona}".replace("*", " ")
     texto_completo = quitar_tildes(texto_bruto).lower()
-
-    # Log de comprobación para ver qué texto está leyendo exactamente este piso
-    print(f"🔑 Keys en el JSON para {item_id}: {list(item.keys())}")
-    print(f"📄 [{item_id}] texto completo extraído ({len(texto_completo)} chars): {texto_completo[:120]}...")
 
     # =========================================================================
     # 2. FILTROS DE TEXTO CRÍTICOS (Ocupados, alquilados, nuda propiedad, etc.)
@@ -105,9 +96,9 @@ def procesar_inmueble(item):
     # =========================================================================
     zonas_prohibidas = ["san cristobal", "vallecas", "puente de vallecas", "villaverde", "entrevias"]
     
-    zona_limpia = quitar_tildes(zona).lower()
-    if any(z in zona_limpia or z in texto_completo for z in zonas_prohibidas): 
-        return False, "Descartado: Zona prohibida"
+    # Aquí buscamos tanto en la zona oficial como dentro del texto kilométrico del title/description
+    if any(z in texto_completo for z in zonas_prohibidas): 
+        return False, "Descartado: Zona prohibida detectada en el texto/título"
 
     # =========================================================================
     # 4. FILTRO DE PLANTA: Quitar bajos / plantas bajas
