@@ -126,65 +126,76 @@ def procesar_inmueble(item):
     return True, "Cumple todos los filtros"
     
 
-def ejecutar_proceso():
-    # 1. Inicializar la base de datos y obtener inmuebles
-    gestor_db.inicializar_base_datos()
-    resultados_apify = obtener_pisos_desde_json()
+def procesar_inmueble(item):
+    # 1. Extracción de campos clave del diccionario
+    item_id = str(item.get('propertyCode') or item.get('id') or 'N/A')
+    precio = item.get('price', 0)
+    superficie = item.get('size', 0)
+    habitaciones = item.get('rooms', 0)
+    planta = str(item.get('floor', '')).lower().strip()
+    zona = str(item.get('zone', '')).lower()
     
-    inmuebles_aceptados = []
-    procesados_en_esta_ejecucion = set()
+    # Uso 'or' para que si un elemento del JSON viene como null, 
+    # Python no devuelva el texto "none" sino una cadena vacía.
+    titulo = str(item.get('title') or '').lower()
+    descripcion = str(item.get('description') or '').lower()
+    
+    # Juntamos todo el texto disponible para analizarlo a fondo
+    texto_bruto = f"{titulo} {descripcion} {zona}".replace("*", " ")
+    texto_completo = quitar_tildes(texto_bruto)
 
-    print("\n" + "="*80)
-    print(" 📋 INMUEBLES SELECCIONADOS QUE CUMPLEN TODOS LOS CRITERIOS v2")
-    print("="*80)
+    # =========================================================================
+    # 2. FILTROS DE TEXTO CRÍTICOS (Ocupados, alquilados, nuda propiedad, etc.)
+    # =========================================================================
+    terminos_prohibidos = [
+        "nuda propiedad", 
+        "alquilada", 
+        "alquilado", 
+        "ocupada", 
+        "ocupado", 
+        "okupa", 
+        "no visitable",
+        "sin posesión",
+        "solo inversores", 
+        "exclusivamente inversores",
+        "rentabilidad"
+    ]
+    
+    for termino in terminos_prohibidos:
+        if termino in texto_completo:
+            return False, f"Término prohibido estricto: {termino}"
 
-    for item in resultados_apify:
+    # =========================================================================
+    # 3. FILTRO DE BARRIO / ZONA: Excluir zonas no deseadas
+    # =========================================================================
+    zonas_prohibidas = ["san cristobal", "vallecas", "puente de vallecas", "villaverde", "entrevias"]
+    
+    if any(z in texto_completo for z in zonas_prohibidas): 
+        return False, "Descartado: Zona prohibida detectada en el texto/título"
+
+    # =========================================================================
+    # 4. FILTRO DE PLANTA: Quitar bajos / plantas bajas
+    # =========================================================================
+    if planta in ['bj', 'bajo', '0', 'semisótano', 'ss']:
+        return False, "Descartado: Planta baja / bajo no deseado"
+
+    # =========================================================================
+    # 5. FILTROS NUMÉRICOS (Precio, superficie, habitaciones)
+    # =========================================================================
+    if precio < PRECIO_MIN or precio > PRECIO_MAX:
+        return False, "Fuera de rango de precio"
+
+    if superficie < SUPERFICIE_MIN:
+        return False, "Superficie insuficiente"
         
-        item_id = str(item.get("id") or item.get("propertyCode") or "")
+    if habitaciones < HABITACIONES_MIN:
+        return False, "Habitaciones insuficientes"
 
-        if not item_id or item_id in procesados_en_esta_ejecucion:
-            continue
-        procesados_en_esta_ejecucion.add(item_id)
+    # Si supera todos los filtros, imprimimos la traza solo de los aprobados
+    print(f"📄 [APROBADO] ID {item_id} ({len(texto_completo)} chars): {texto_completo[:100]}...")
 
-        # Comprobar en la BD si ya se notificó anteriormente para saltarlo
-        if gestor_db.ya_fue_visto(item_id):
-            continue
-            
-        # Evaluar contra las reglas de negocio y filtros
-        es_valido, motivo = procesar_inmueble(item)
-        if not es_valido:
-            # Descartados silenciados por completo
-            continue
-        
-        print(f"✅ ¡APROBADO! ID {item_id}")
-        inmuebles_aceptados.append(item)
-        
-        # Extraemos atributos y la descripción completa para traza
-        precio = item.get("price", 0)
-        superficie = item.get("size") or item.get("builtArea") or item.get("sizeM2") or 0
-        habitaciones = item.get("rooms") or item.get("roomsCount") or item.get("bedrooms", 0)
-        planta = item.get("floor", "N/A")
-        ascensor = "Con ascensor" if item.get("hasLift") else "Sin ascensor"
-        zona = item.get("zone") or item.get("municipality") or "Madrid"
-        descripcion_completa = item.get("description") or item.get("desc") or item.get("text") or "Sin descripción"
-        url = item.get("url") or item.get("link") or "Sin URL"
-
-        print(f"🏠 ID: {item_id} | {precio:,.0f}€ | {superficie} m² | {habitaciones} habs | Planta: {planta} ({ascensor}) | Zona: {zona}")
-        print(f"📄 Descripción analizada: {descripcion_completa[:150]}...")
-        print(f"🔗 Link: {url}")
-         
-        # 2. Enviar notificación por Telegram y guardar en BD
-        try:
-            enviar_alerta_piso(item)
-            gestor_db.guardar_piso_visto(item_id, item.get("title", "Sin título"), precio, zona)
-            print("✓ Alerta enviada a tu Telegram con éxito.")
-            print(f"  └─ Registro guardado en BD: {item_id}\n")
-        except Exception as e:
-            print(f"⚠️ Error enviando notificación para ID {item_id}: {e}\n")
-
-    print("="*80)
-    print(f" Total inmuebles nuevos notificados: {len(inmuebles_aceptados)}")
-    print("="*80 + "\n")
+    # Si supera todos los filtros, se aprueba
+    return True, "Cumple todos los filtros"
     
 
 
