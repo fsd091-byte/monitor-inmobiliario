@@ -76,6 +76,7 @@ def procesar_inmueble(item):
     texto_completo = quitar_tildes(texto_bruto).lower()
 
     # Log de comprobación para ver qué texto está leyendo exactamente este piso
+    print(f"🔑 Keys en el JSON para {item_id}: {list(item.keys())}")
     print(f"📄 [{item_id}] texto completo extraído ({len(texto_completo)} chars): {texto_completo[:120]}...")
 
     # =========================================================================
