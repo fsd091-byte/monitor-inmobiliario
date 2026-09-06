@@ -52,12 +52,12 @@ def limpiar_total(texto):
     # Elimina espacios, guiones y cualquier carácter que no sea letra o número
     return re.sub(r'[^a-z0-9]', '', texto_base)
 
-
 def procesar_inmueble(item):
     item_id = str(item.get('propertyCode') or item.get('id') or 'N/A')
     precio = item.get('price', 0)
     superficie = item.get('size', 0)
-    habitaciones = item.get('rooms', 0)
+    habitaciones = int(item.get('rooms', 2))
+    baños = int(item.get('bathrooms', item.get('baths', 1)))
     planta = str(item.get('floor', '')).lower().strip()
     zona = str(item.get('zone', '')).lower()
     tiene_ascensor = item.get('hasLift', True)
@@ -75,12 +75,16 @@ def procesar_inmueble(item):
         return False, "Habitaciones insuficientes"
 
     # =========================================================================
-    # 2. REGLA DE HABITACIONES VS PRECIO MÁXIMO
+    # 2. REGLAS DE NEGOCIO: HABITACIONES, PRECIO Y BAÑOS
     # - 2 habitaciones o menos: Máximo 150.000 €
     # - 3 habitaciones o más: Hasta los 175.000 €
+    # - Más de 2 habitaciones: Exigir mínimo 2 baños
     # =========================================================================
     if habitaciones <= 2 and precio > 150000:
         return False, "Descartado: <= 2 habitaciones y precio > 150.000€"
+
+    if habitaciones > 2 and baños < 2:
+        return False, "Descartado: > 2 habitaciones pero menos de 2 baños"
 
     # =========================================================================
     # 3. FILTRO DE PLANTA Y ASCENSOR
@@ -91,7 +95,6 @@ def procesar_inmueble(item):
     if planta in ['bj', 'bajo', '0', 'semisótano', 'ss']:
         return False, "Descartado: Planta baja / bajo no deseado"
 
-    # Comprobación de ascensor y planta
     plantas_primer_piso = ['1', '1º', 'primero']
     if not tiene_ascensor and planta not in plantas_primer_piso:
         return False, "Descartado: Sin ascensor y no es un primer piso"
@@ -143,8 +146,7 @@ def procesar_inmueble(item):
 
     # Si supera todos los filtros, se aprueba
     print(f"📄 [APROBADO] ID {item_id} ({len(texto_completo)} chars): {texto_completo[:100]}...")
-    return True, "Cumple todos los filtros"
-    
+    return True, "Cumple todos los filtros"    
     
 def ejecutar_proceso():
     # 1. Inicializar la base de datos y obtener inmuebles
