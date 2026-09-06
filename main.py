@@ -111,6 +111,12 @@ def procesar_inmueble(item):
         return False, "Descartado: Planta baja / bajo no deseado"
 
     # =========================================================================
+    # FILTRO DE LOCALIZACIÓN: Debe coincidir con alguna de las zonas objetivo
+    # =========================================================================
+    if not any(loc in texto_completo for loc in TARGET_LOCATIONS):
+        return False, "Descartado: Fuera de las ubicaciones objetivo"
+
+    # =========================================================================
     # 5. FILTROS NUMÉRICOS (Precio, superficie, habitaciones)
     # =========================================================================
     if precio < PRECIO_MIN or precio > PRECIO_MAX:
@@ -131,12 +137,6 @@ def procesar_inmueble(item):
 
 
 def procesar_inmueble(item):
-
-    # TRAZA DE DEBUGGING ABSOLUTO
-    if str(item.get('propertyCode')) == '112189064':
-        print(f"🔍 DEBUGGING CRudo para 112189064 -> Claves: {list(item.keys())}")
-        print(f"🔍 Title crudo: {repr(item.get('title'))}")
-        print(f"🔍 Description crudo: {repr(item.get('desc'))}")
         
     # 1. Extracción de campos clave del diccionario
     item_id = str(item.get('propertyCode') or item.get('id') or 'N/A')
