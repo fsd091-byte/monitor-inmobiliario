@@ -54,24 +54,26 @@ def limpiar_total(texto):
 
 
 def procesar_inmueble(item):
-    # 1. Extracción de campos clave del diccionario
-    item_id = str(item.get('propertyCode', 'N/A'))
+    item_id = str(item.get('propertyCode') or item.get('id') or 'N/A')
     precio = item.get('price', 0)
     superficie = item.get('size', 0)
     habitaciones = item.get('rooms', 0)
     planta = str(item.get('floor', '')).lower().strip()
     zona = str(item.get('zone', '')).lower()
-    titulo = str(item.get('title', '')).lower()
-    descripcion = str(item.get('description')).lower()
     
-    # Extraemos el title y la descripción por si acaso viene cualquiera de los dos
-    # titulo = str(item.get('title') or '')
-    # descripcion = str(item.get('description') or '')
-    
-    # Juntamos todo lo que tenga texto para analizarlo a fondo
-    # texto_bruto = f"{titulo} {descripcion} {zona}".replace("*", " ")
-    
-    texto_completo = quitar_tildes(titulo)
+    # Recogemos AUTOMÁTICO cualquier texto que venga en el JSON (sea cual sea el nombre de la clave)
+    textos_extraidos = []
+    for v in item.values():
+        if isinstance(v, str) and not v.startswith('http'):
+            textos_extraidos.append(v)
+        elif isinstance(v, dict):
+            for sub_v in v.values():
+                if isinstance(sub_v, str) and not sub_v.startswith('http'):
+                    textos_extraidos.append(sub_v)
+                    
+    # Juntamos todo el texto encontrado (incluyendo título, descripción, zona, etc.)
+    texto_bruto = " ".join(textos_extraidos).replace("*", " ")
+    texto_completo = quitar_tildes(texto_bruto).lower()
 
     # =========================================================================
     # 2. FILTROS DE TEXTO CRÍTICOS (Ocupados, alquilados, nuda propiedad, etc.)
@@ -99,9 +101,8 @@ def procesar_inmueble(item):
     # =========================================================================
     zonas_prohibidas = ["san cristobal", "vallecas", "puente de vallecas", "villaverde", "entrevias"]
     
-    # Aquí buscamos tanto en la zona oficial como dentro del texto kilométrico del title/description
     if any(z in texto_completo for z in zonas_prohibidas): 
-        return False, "Descartado: Zona prohibida detectada en el texto/título"
+        return False, "Descartado: Zona prohibida detectada en el texto"
 
     # =========================================================================
     # 4. FILTRO DE PLANTA: Quitar bajos / plantas bajas
@@ -121,10 +122,13 @@ def procesar_inmueble(item):
     if habitaciones < HABITACIONES_MIN:
         return False, "Habitaciones insuficientes"
 
-    # Si supera todos los filtros, se aprueba y sacamos traza
-    print(f"📄 [{item_id}] Texto analizado ({len(texto_completo)} chars): {texto_completo[:100]}...")
+    # Si supera todos los filtros, imprimimos la traza con el recuento real de caracteres
+    print(f"📄 [APROBADO] ID {item_id} ({len(texto_completo)} chars): {texto_completo[:100]}...")
+
+    # Si supera todos los filtros, se aprueba
     return True, "Cumple todos los filtros"
     
+
 
 def procesar_inmueble(item):
     # 1. Extracción de campos clave del diccionario
