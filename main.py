@@ -24,13 +24,14 @@ TARGET_LOCATIONS = [
     "coslada", "san fernando de henares",
     "rivas", "rivas-vaciamadrid",
     "guadalajara", "azuqueca", "azuqueca de henares",
+    "Zaragoza",
     
     # Sur de Madrid
     "getafe", "móstoles", "mostoles", 
     "fuenlabrada", "alcorcón", "alcorcon", "leganés", "leganes",
     
     # Capitales de provincia cercanas
-    "ávila", "avila","Zaragoza","zaragoza"
+    "ávila", "avila","Zaragoza","zaragoza",
     
     # Valor general de la provincia devuelto por Apify
     "madrid"
@@ -88,7 +89,7 @@ def procesar_inmueble(item):
         if precio >= 130000:
             return False, "Descartado: Ávila con precio >= 130.000€"
     elif any(loc in ubicacion_inmueble for loc in ["guadalajara", "azuqueca"]):
-        if precio >= 160000:
+        if precio >= 100000:
             return False, "Descartado: Guadalajara con precio >= 170.000€"
     #elif "zaragoza" in ubicacion_inmueble:
     #    if precio >= 140000:
