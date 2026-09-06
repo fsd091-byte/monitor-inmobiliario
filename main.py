@@ -19,21 +19,21 @@ HABITACIONES_MIN = 2
 
 TARGET_LOCATIONS = [
     # Corredor del Henares y Guadalajara
-    #"alcalá de henares", "alcala de henares",
-    #"torrejón de ardoz", "torrejon de ardoz",
-    #"coslada", "san fernando de henares",
-    #"rivas", "rivas-vaciamadrid",
+    "alcalá de henares", "alcala de henares",
+    "torrejón de ardoz", "torrejon de ardoz",
+    "coslada", "san fernando de henares",
+    "rivas", "rivas-vaciamadrid",
     "guadalajara", "azuqueca", "azuqueca de henares",
     
     # Sur de Madrid
-    #"getafe", "móstoles", "mostoles", 
-    #"fuenlabrada", "alcorcón", "alcorcon", "leganés", "leganes",
+    "getafe", "móstoles", "mostoles", 
+    "fuenlabrada", "alcorcón", "alcorcon", "leganés", "leganes",
     
     # Capitales de provincia cercanas
-    #"ávila", "avila",
+    "ávila", "avila","Zaragoza","zaragoza"
     
     # Valor general de la provincia devuelto por Apify
-    #"madrid"
+    "madrid"
 ]
 
 def quitar_tildes(texto):
