@@ -52,6 +52,7 @@ def limpiar_total(texto):
     # Elimina espacios, guiones y cualquier carácter que no sea letra o número
     return re.sub(r'[^a-z0-9]', '', texto_base)
 
+
 def procesar_inmueble(item):
     # 1. Extracción de campos clave del diccionario
     item_id = str(item.get('propertyCode', 'N/A'))
@@ -61,23 +62,20 @@ def procesar_inmueble(item):
     planta = str(item.get('floor', '')).lower().strip()
     zona = str(item.get('zone', '')).lower()
     
-    # Extraemos los campos de texto del anuncio
-    titulo = str(item.get('title', ''))
-    descripcion = str(item.get('description', ''))
-    subtitulo = str(item.get('subTitle', ''))
-    comentario = str(item.get('comment', ''))
-    features = str(item.get('features', ''))
+    # Extraemos buscando múltiples variantes de claves por si el JSON las nombra distinto
+    titulo = str(item.get('title') or item.get('subject') or '')
+    descripcion = str(item.get('description') or item.get('desc') or item.get('text') or '')
+    subtitulo = str(item.get('subTitle') or item.get('subtitle') or '')
+    comentario = str(item.get('comment') or item.get('comments') or '')
+    features = str(item.get('features') or item.get('caracteristicas') or '')
     
     # Juntamos todo y le quitamos tildes y asteriscos de golpe para estandarizarlo
     texto_bruto = f"{titulo} {descripcion} {subtitulo} {comentario} {features}".replace("*", " ")
-    texto_completo = quitar_tildes(texto_bruto)
+    texto_completo = quitar_tildes(texto_bruto).lower()
 
-    # log del texto completo porqu efallan los filtros
-    
-    # print(f"🏠 ID: {item_id} | {precio:,.0f}€ | {superficie} m² | {habitaciones} habs | Planta: {planta} ({ascensor}) | Zona: {zona}")
+    # Log temporal para comprobar que ya carga texto real y no 'none'
     print(f"📄 [{item_id}] texto completo: {texto_completo[:150]}...")
-   
-    
+
     # =========================================================================
     # 2. FILTROS DE TEXTO CRÍTICOS (Ocupados, alquilados, nuda propiedad, etc.)
     # =========================================================================
@@ -104,7 +102,7 @@ def procesar_inmueble(item):
     # =========================================================================
     zonas_prohibidas = ["san cristobal", "vallecas", "puente de vallecas", "villaverde", "entrevias"]
     
-    zona_limpia = quitar_tildes(zona)
+    zona_limpia = quitar_tildes(zona).lower()
     if any(z in zona_limpia or z in texto_completo for z in zonas_prohibidas): 
         return False, "Descartado: Zona prohibida"
 
