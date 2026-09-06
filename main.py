@@ -61,15 +61,16 @@ def procesar_inmueble(item):
     planta = str(item.get('floor', '')).lower().strip()
     zona = str(item.get('zone', '')).lower()
     
-    # Extraemos únicamente los campos de texto del anuncio de forma limpia
-    titulo = str(item.get('title', '')).lower()
-    descripcion = str(item.get('description', '')).lower()
-    subtitulo = str(item.get('subTitle', '')).lower()
-    comentario = str(item.get('comment', '')).lower()
-    features = str(item.get('features', '')).lower()
+    # Extraemos los campos de texto del anuncio
+    titulo = str(item.get('title', ''))
+    descripcion = str(item.get('description', ''))
+    subtitulo = str(item.get('subTitle', ''))
+    comentario = str(item.get('comment', ''))
+    features = str(item.get('features', ''))
     
-    # Juntamos solo los textos informativos del piso (aquí ya viaja de lleno la descripción)
-    texto_completo = f"{titulo} {descripcion} {subtitulo} {comentario} {features}".replace("*", " ")
+    # Juntamos todo y le quitamos tildes y asteriscos de golpe para estandarizarlo
+    texto_bruto = f"{titulo} {descripcion} {subtitulo} {comentario} {features}".replace("*", " ")
+    texto_completo = quitar_tildes(texto_bruto)
 
     # =========================================================================
     # 2. FILTROS DE TEXTO CRÍTICOS (Ocupados, alquilados, nuda propiedad, etc.)
@@ -95,9 +96,10 @@ def procesar_inmueble(item):
     # =========================================================================
     # 3. FILTRO DE BARRIO / ZONA: Excluir zonas no deseadas
     # =========================================================================
-    zonas_prohibidas = ["san cristobal", "cristóbal", "vallecas", "puente de vallecas", "villaverde", "entrevias", "entrevías"]
+    zonas_prohibidas = ["san cristobal", "vallecas", "puente de vallecas", "villaverde", "entrevias"]
     
-    if any(z in zona or z in texto_completo for z in zonas_prohibidas): 
+    zona_limpia = quitar_tildes(zona)
+    if any(z in zona_limpia or z in texto_completo for z in zonas_prohibidas): 
         return False, "Descartado: Zona prohibida"
 
     # =========================================================================
@@ -119,8 +121,7 @@ def procesar_inmueble(item):
         return False, "Habitaciones insuficientes"
 
     # Si supera todos los filtros, se aprueba
-    return True, "Cumple todos los filtros"
-    
+    return True, "Cumple todos los filtros"    
 def ejecutar_proceso():
 
     # 1. Inicializar la base de datos y obtener inmuebles
