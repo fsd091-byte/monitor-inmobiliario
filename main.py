@@ -270,9 +270,12 @@ def ejecutar_proceso():
 
     # 1. Inicializar la base de datos y obtener inmuebles
     gestor_db.inicializar_base_datos()
-    resultados_apify = obtener_pisos_desde_json()
+    
+    # Leemos directamente del JSON específico de Guadalajara para jugar con los datos reales
+    resultados_apify = obtener_pisos_desde_json("pisos_guadalajara.json")
     
     inmuebles_aceptados = []
+    # ... resto de tu lógica de filtros y envío a Telegram
 
     print("\n" + "="*80)
     print(" 📋 INMUEBLES SELECCIONADOS QUE CUMPLEN TODOS LOS CRITERIOS v2")
