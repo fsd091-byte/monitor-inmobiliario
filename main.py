@@ -61,14 +61,17 @@ def procesar_inmueble(item):
     habitaciones = item.get('rooms', 0)
     planta = str(item.get('floor', '')).lower().strip()
     zona = str(item.get('zone', '')).lower()
+    titulo = str(item.get('title', '')).lower()
+    descripcion = str(item.get('description')).lower()
     
     # Extraemos el title y la descripción por si acaso viene cualquiera de los dos
-    titulo = str(item.get('title') or '')
-    descripcion = str(item.get('description') or '')
+    # titulo = str(item.get('title') or '')
+    # descripcion = str(item.get('description') or '')
     
     # Juntamos todo lo que tenga texto para analizarlo a fondo
-    texto_bruto = f"{titulo} {descripcion} {zona}".replace("*", " ")
-    texto_completo = quitar_tildes(texto_bruto).lower()
+    # texto_bruto = f"{titulo} {descripcion} {zona}".replace("*", " ")
+    
+    texto_completo = quitar_tildes(titulo)
 
     # =========================================================================
     # 2. FILTROS DE TEXTO CRÍTICOS (Ocupados, alquilados, nuda propiedad, etc.)
