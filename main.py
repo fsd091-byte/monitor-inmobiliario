@@ -19,21 +19,21 @@ HABITACIONES_MIN = 2
 
 TARGET_LOCATIONS = [
     # Corredor del Henares y Guadalajara
-    "alcalá de henares", "alcala de henares",
-    "torrejón de ardoz", "torrejon de ardoz",
-    "coslada", "san fernando de henares",
-    "rivas", "rivas-vaciamadrid",
+    #"alcalá de henares", "alcala de henares",
+    #"torrejón de ardoz", "torrejon de ardoz",
+    #"coslada", "san fernando de henares",
+    #"rivas", "rivas-vaciamadrid",
     "guadalajara", "azuqueca", "azuqueca de henares",
     
     # Sur de Madrid
-    "getafe", "móstoles", "mostoles", 
-    "fuenlabrada", "alcorcón", "alcorcon", "leganés", "leganes",
+    #"getafe", "móstoles", "mostoles", 
+    #"fuenlabrada", "alcorcón", "alcorcon", "leganés", "leganes",
     
     # Capitales de provincia cercanas
-    "ávila", "avila",
+    #"ávila", "avila",
     
     # Valor general de la provincia devuelto por Apify
-    "madrid"
+    #"madrid"
 ]
 
 def quitar_tildes(texto):
@@ -113,7 +113,9 @@ def procesar_inmueble(item):
     # =========================================================================
     # FILTRO DE LOCALIZACIÓN: Debe coincidir con alguna de las zonas objetivo
     # =========================================================================
-    if not any(loc in texto_completo for loc in TARGET_LOCATIONS):
+    ubicacion_inmueble = f"{zona} {item.get('municipality', '')} {item.get('province', '')}".lower()
+    
+    if not any(loc in ubicacion_inmueble for loc in TARGET_LOCATIONS):
         return False, "Descartado: Fuera de las ubicaciones objetivo"
 
     # =========================================================================
