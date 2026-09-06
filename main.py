@@ -60,13 +60,15 @@ def procesar_inmueble(item):
     baños = int(item.get('bathrooms', item.get('baths', 1)))
     planta = str(item.get('floor', '')).lower().strip()
     zona = str(item.get('zone', '')).lower()
+    municipality = str(item.get('municipality', '')).lower()
+    province = str(item.get('province', '')).lower()
     tiene_ascensor = item.get('hasLift', True)
     
     # =========================================================================
-    # 1. FILTROS NUMÉRICOS Y DE ATRIBUTOS BÁSICOS
+    # 1. FILTROS NUMÉRICOS GLOBALES Y DE ATRIBUTOS BÁSICOS
     # =========================================================================
     if precio < PRECIO_MIN or precio > PRECIO_MAX:
-        return False, "Fuera de rango de precio"
+        return False, "Fuera de rango de precio global"
 
     if superficie < SUPERFICIE_MIN:
         return False, "Superficie insuficiente"
@@ -75,9 +77,31 @@ def procesar_inmueble(item):
         return False, "Habitaciones insuficientes"
 
     # =========================================================================
-    # 2. REGLAS DE NEGOCIO: HABITACIONES, PRECIO Y BAÑOS
+    # 2. FILTROS DE LOCALIZACIÓN Y TECTOS DE PRECIO ESPECÍFICOS POR ZONA
+    # - Ávila: < 100.000 €
+    # - Guadalajara / Azuqueca: < 160.000 €
+    # - Zaragoza: < 140.000 €
+    # =========================================================================
+    ubicacion_inmueble = f"{zona} {municipality} {province}".lower()
+    
+    if any(loc in ubicacion_inmueble for loc in ["ávila", "avila"]):
+        if precio >= 100000:
+            return False, "Descartado: Ávila con precio >= 100.000€"
+    elif any(loc in ubicacion_inmueble for loc in ["guadalajara", "azuqueca"]):
+        if precio >= 160000:
+            return False, "Descartado: Guadalajara con precio >= 160.000€"
+    elif "zaragoza" in ubicacion_inmueble:
+        if precio >= 140000:
+            return False, "Descartado: Zaragoza con precio >= 140.000€"
+
+    # Validar que pertenezca a las zonas objetivo generales
+    if not any(loc in ubicacion_inmueble for loc in TARGET_LOCATIONS):
+        return False, "Descartado: Fuera de las ubicaciones objetivo"
+
+    # =========================================================================
+    # 3. REGLAS DE HABITACIONES, PRECIO GENERAL Y BAÑOS
     # - 2 habitaciones o menos: Máximo 150.000 €
-    # - 3 habitaciones o más: Hasta los 175.000 €
+    # - 3 habitaciones o más: Hasta los 175.000 € (o el límite zonal menor)
     # - Más de 2 habitaciones: Exigir mínimo 2 baños
     # =========================================================================
     if habitaciones <= 2 and precio > 150000:
@@ -87,10 +111,9 @@ def procesar_inmueble(item):
         return False, "Descartado: > 2 habitaciones pero menos de 2 baños"
 
     # =========================================================================
-    # 3. FILTRO DE PLANTA Y ASCENSOR
+    # 4. FILTRO DE PLANTA Y ASCENSOR
     # - Descartar bajos / semisótanos siempre
     # - Sin ascensor: Solo se permite el primer piso
-    # - Con ascensor: Se permiten todas las plantas válidas
     # =========================================================================
     if planta in ['bj', 'bajo', '0', 'semisótano', 'ss']:
         return False, "Descartado: Planta baja / bajo no deseado"
@@ -98,14 +121,6 @@ def procesar_inmueble(item):
     plantas_primer_piso = ['1', '1º', 'primero']
     if not tiene_ascensor and planta not in plantas_primer_piso:
         return False, "Descartado: Sin ascensor y no es un primer piso"
-
-    # =========================================================================
-    # 4. FILTRO DE LOCALIZACIÓN
-    # =========================================================================
-    ubicacion_inmueble = f"{zona} {item.get('municipality', '')} {item.get('province', '')}".lower()
-    
-    if not any(loc in ubicacion_inmueble for loc in TARGET_LOCATIONS):
-        return False, "Descartado: Fuera de las ubicaciones objetivo"
 
     # =========================================================================
     # 5. EXTRACCIÓN Y FILTROS DE TEXTO (Términos prohibidos y zonas excluidas)
@@ -144,9 +159,8 @@ def procesar_inmueble(item):
     if any(z in texto_completo for z in zonas_prohibidas): 
         return False, "Descartado: Zona prohibida detectada en el texto"
 
-    # Si supera todos los filtros, se aprueba
     print(f"📄 [APROBADO] ID {item_id} ({len(texto_completo)} chars): {texto_completo[:100]}...")
-    return True, "Cumple todos los filtros"    
+    return True, "Cumple todos los filtros"
     
 def ejecutar_proceso():
     # 1. Inicializar la base de datos y obtener inmuebles
