@@ -125,6 +125,62 @@ def procesar_inmueble(item):
 
 
 def ejecutar_proceso():
+    # 1. Inicializar la base de datos y obtener inmuebles
+    gestor_db.inicializar_base_datos()
+    resultados_apify = obtener_pisos_desde_json()
+    
+    inmuebles_aceptados = []
+
+    print("\n" + "="*80)
+    print(" 📋 INMUEBLES SELECCIONADOS QUE CUMPLEN TODOS LOS CRITERIOS v2")
+    print("="*80)
+
+    for item in resultados_apify:
+        
+        item_id = str(item.get("id") or item.get("propertyCode") or "")
+
+        # Comprobar en la BD si ya se notificó anteriormente para saltarlo
+        if gestor_db.ya_fue_visto(item_id):
+            continue
+            
+        # Evaluar contra las reglas de negocio y filtros
+        es_valido, motivo = procesar_inmueble(item)
+        if not es_valido:
+            # Traza de descartados comentada para mantener la consola limpia
+            # print(f"❌ Descartado ID {item_id}: {motivo}")
+            continue
+        
+        print(f"✅ ¡APROBADO! ID {item_id}")
+        inmuebles_aceptados.append(item)
+        
+        # Extraemos atributos y la descripción completa para traza
+        precio = item.get("price", 0)
+        superficie = item.get("size") or item.get("builtArea") or item.get("sizeM2") or 0
+        habitaciones = item.get("rooms") or item.get("roomsCount") or item.get("bedrooms", 0)
+        planta = item.get("floor", "N/A")
+        ascensor = "Con ascensor" if item.get("hasLift") else "Sin ascensor"
+        zona = item.get("zone") or item.get("municipality") or "Madrid"
+        descripcion_completa = item.get("description", "Sin descripción")
+        url = item.get("url") or item.get("link") or "Sin URL"
+
+        print(f"🏠 ID: {item_id} | {precio:,.0f}€ | {superficie} m² | {habitaciones} habs | Planta: {planta} ({ascensor}) | Zona: {zona}")
+        print(f"📄 Descripción analizada: {descripcion_completa[:150]}...")
+        print(f"🔗 Link: {url}")
+         
+        # 2. Enviar notificación por Telegram y guardar en BD
+        try:
+            enviar_alerta_piso(item)
+            gestor_db.guardar_piso_visto(item_id, item.get("title", "Sin título"), precio, zona)
+            print("✓ Alerta enviada a tu Telegram con éxito.")
+            print(f"  └─ Registro guardado en BD: {item_id}\n")
+        except Exception as e:
+            print(f"⚠️ Error enviando notificación para ID {item_id}: {e}\n")
+
+    print("="*80)
+    print(f" Total inmuebles nuevos notificados: {len(inmuebles_aceptados)}")
+    print("="*80 + "\n")
+
+def ejecutar_proceso():
 
     # 1. Inicializar la base de datos y obtener inmuebles
     gestor_db.inicializar_base_datos()
