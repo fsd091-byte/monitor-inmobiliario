@@ -62,16 +62,21 @@ def procesar_inmueble(item):
     planta = str(item.get('floor', '')).lower().strip()
     zona = str(item.get('zone', '')).lower()
     
-    # Extraemos buscando múltiples variantes de claves por si el JSON las nombra distinto
-    titulo = str(item.get('title') or item.get('subject') or '')
-    descripcion = str(item.get('description') or item.get('desc') or item.get('text') or '')
-    subtitulo = str(item.get('subTitle') or item.get('subtitle') or '')
-    comentario = str(item.get('comment') or item.get('comments') or '')
-    features = str(item.get('features') or item.get('caracteristicas') or '')
-    
-    # Juntamos todo y le quitamos tildes y asteriscos de golpe para estandarizarlo
-    texto_bruto = f"{titulo} {descripcion} {subtitulo} {comentario} {features}".replace("*", " ")
+    # Extracción automática y segura de CUALQUIER texto dentro del diccionario del inmueble
+    textos_extraidos = []
+    for val in item.values():
+        if isinstance(val, str):
+            textos_extraidos.append(val)
+        elif isinstance(val, dict):
+            for sub_val in val.values():
+                if isinstance(sub_val, str):
+                    textos_extraidos.append(sub_val)
+                    
+    texto_bruto = " ".join(textos_extraidos).replace("*", " ")
     texto_completo = quitar_tildes(texto_bruto).lower()
+
+    # Log de comprobación para ver qué texto está leyendo exactamente este piso
+    print(f"📄 [{item_id}] texto completo extraído ({len(texto_completo)} chars): {texto_completo[:120]}...")
 
     # =========================================================================
     # 2. FILTROS DE TEXTO CRÍTICOS (Ocupados, alquilados, nuda propiedad, etc.)
@@ -123,7 +128,7 @@ def procesar_inmueble(item):
 
     # Si supera todos los filtros, se aprueba
     return True, "Cumple todos los filtros"
-
+    
 
 def ejecutar_proceso():
     # 1. Inicializar la base de datos y obtener inmuebles
