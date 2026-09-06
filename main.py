@@ -85,7 +85,7 @@ def procesar_inmueble(item):
     ubicacion_inmueble = f"{zona} {municipality} {province}".lower()
     
     if any(loc in ubicacion_inmueble for loc in ["ávila", "avila"]):
-        if precio >= 100000:
+        if precio >= 130000:
             return False, "Descartado: Ávila con precio >= 130.000€"
     elif any(loc in ubicacion_inmueble for loc in ["guadalajara", "azuqueca"]):
         if precio >= 160000:
