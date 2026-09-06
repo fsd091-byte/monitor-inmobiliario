@@ -121,7 +121,9 @@ def procesar_inmueble(item):
         return False, "Habitaciones insuficientes"
 
     # Si supera todos los filtros, se aprueba
-    return True, "Cumple todos los filtros"    
+    return True, "Cumple todos los filtros"
+
+
 def ejecutar_proceso():
 
     # 1. Inicializar la base de datos y obtener inmuebles
