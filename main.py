@@ -60,8 +60,53 @@ def procesar_inmueble(item):
     habitaciones = item.get('rooms', 0)
     planta = str(item.get('floor', '')).lower().strip()
     zona = str(item.get('zone', '')).lower()
+    tiene_ascensor = item.get('hasLift', True)
     
-    # Recogemos AUTOMÁTICO cualquier texto que venga en el JSON (sea cual sea el nombre de la clave)
+    # =========================================================================
+    # 1. FILTROS NUMÉRICOS Y DE ATRIBUTOS BÁSICOS
+    # =========================================================================
+    if precio < PRECIO_MIN or precio > PRECIO_MAX:
+        return False, "Fuera de rango de precio"
+
+    if superficie < SUPERFICIE_MIN:
+        return False, "Superficie insuficiente"
+        
+    if habitaciones < HABITACIONES_MIN:
+        return False, "Habitaciones insuficientes"
+
+    # =========================================================================
+    # 2. REGLA DE HABITACIONES VS PRECIO MÁXIMO
+    # - 2 habitaciones o menos: Máximo 150.000 €
+    # - 3 habitaciones o más: Hasta los 175.000 €
+    # =========================================================================
+    if habitaciones <= 2 and precio > 150000:
+        return False, "Descartado: <= 2 habitaciones y precio > 150.000€"
+
+    # =========================================================================
+    # 3. FILTRO DE PLANTA Y ASCENSOR
+    # - Descartar bajos / semisótanos siempre
+    # - Sin ascensor: Solo se permite el primer piso
+    # - Con ascensor: Se permiten todas las plantas válidas
+    # =========================================================================
+    if planta in ['bj', 'bajo', '0', 'semisótano', 'ss']:
+        return False, "Descartado: Planta baja / bajo no deseado"
+
+    # Comprobación de ascensor y planta
+    plantas_primer_piso = ['1', '1º', 'primero']
+    if not tiene_ascensor and planta not in plantas_primer_piso:
+        return False, "Descartado: Sin ascensor y no es un primer piso"
+
+    # =========================================================================
+    # 4. FILTRO DE LOCALIZACIÓN
+    # =========================================================================
+    ubicacion_inmueble = f"{zona} {item.get('municipality', '')} {item.get('province', '')}".lower()
+    
+    if not any(loc in ubicacion_inmueble for loc in TARGET_LOCATIONS):
+        return False, "Descartado: Fuera de las ubicaciones objetivo"
+
+    # =========================================================================
+    # 5. EXTRACCIÓN Y FILTROS DE TEXTO (Términos prohibidos y zonas excluidas)
+    # =========================================================================
     textos_extraidos = []
     for v in item.values():
         if isinstance(v, str) and not v.startswith('http'):
@@ -71,13 +116,9 @@ def procesar_inmueble(item):
                 if isinstance(sub_v, str) and not sub_v.startswith('http'):
                     textos_extraidos.append(sub_v)
                     
-    # Juntamos todo el texto encontrado (incluyendo título, descripción, zona, etc.)
     texto_bruto = " ".join(textos_extraidos).replace("*", " ")
     texto_completo = quitar_tildes(texto_bruto).lower()
 
-    # =========================================================================
-    # 2. FILTROS DE TEXTO CRÍTICOS (Ocupados, alquilados, nuda propiedad, etc.)
-    # =========================================================================
     terminos_prohibidos = [
         "nuda propiedad", 
         "alquilada", 
@@ -96,45 +137,14 @@ def procesar_inmueble(item):
         if termino in texto_completo:
             return False, f"Término prohibido estricto: {termino}"
 
-    # =========================================================================
-    # 3. FILTRO DE BARRIO / ZONA: Excluir zonas no deseadas
-    # =========================================================================
     zonas_prohibidas = ["san cristobal", "vallecas", "puente de vallecas", "villaverde", "entrevias"]
-    
     if any(z in texto_completo for z in zonas_prohibidas): 
         return False, "Descartado: Zona prohibida detectada en el texto"
 
-    # =========================================================================
-    # 4. FILTRO DE PLANTA: Quitar bajos / plantas bajas
-    # =========================================================================
-    if planta in ['bj', 'bajo', '0', 'semisótano', 'ss']:
-        return False, "Descartado: Planta baja / bajo no deseado"
-
-    # =========================================================================
-    # FILTRO DE LOCALIZACIÓN: Debe coincidir con alguna de las zonas objetivo
-    # =========================================================================
-    ubicacion_inmueble = f"{zona} {item.get('municipality', '')} {item.get('province', '')}".lower()
-    
-    if not any(loc in ubicacion_inmueble for loc in TARGET_LOCATIONS):
-        return False, "Descartado: Fuera de las ubicaciones objetivo"
-
-    # =========================================================================
-    # 5. FILTROS NUMÉRICOS (Precio, superficie, habitaciones)
-    # =========================================================================
-    if precio < PRECIO_MIN or precio > PRECIO_MAX:
-        return False, "Fuera de rango de precio"
-
-    if superficie < SUPERFICIE_MIN:
-        return False, "Superficie insuficiente"
-        
-    if habitaciones < HABITACIONES_MIN:
-        return False, "Habitaciones insuficientes"
-
-    # Si supera todos los filtros, imprimimos la traza con el recuento real de caracteres
-    print(f"📄 [APROBADO FERNANDO] ID {item_id} ({len(texto_completo)} chars): {texto_completo[:100]}...")
-
     # Si supera todos los filtros, se aprueba
+    print(f"📄 [APROBADO] ID {item_id} ({len(texto_completo)} chars): {texto_completo[:100]}...")
     return True, "Cumple todos los filtros"
+    
     
 def ejecutar_proceso():
     # 1. Inicializar la base de datos y obtener inmuebles
