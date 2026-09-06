@@ -123,7 +123,7 @@ def procesar_inmueble(item):
         return False, "Habitaciones insuficientes"
 
     # Si supera todos los filtros, imprimimos la traza con el recuento real de caracteres
-    print(f"📄 [APROBADO] ID {item_id} ({len(texto_completo)} chars): {texto_completo[:100]}...")
+    print(f"📄 [APROBADO FERNANDO] ID {item_id} ({len(texto_completo)} chars): {texto_completo[:100]}...")
 
     # Si supera todos los filtros, se aprueba
     return True, "Cumple todos los filtros"
@@ -131,6 +131,13 @@ def procesar_inmueble(item):
 
 
 def procesar_inmueble(item):
+
+    # TRAZA DE DEBUGGING ABSOLUTO
+    if str(item.get('propertyCode')) == '112189064':
+        print(f"🔍 DEBUGGING CRudo para 112189064 -> Claves: {list(item.keys())}")
+        print(f"🔍 Title crudo: {repr(item.get('title'))}")
+        print(f"🔍 Description crudo: {repr(item.get('desc'))}")
+        
     # 1. Extracción de campos clave del diccionario
     item_id = str(item.get('propertyCode') or item.get('id') or 'N/A')
     precio = item.get('price', 0)
