@@ -272,7 +272,7 @@ def ejecutar_proceso():
     gestor_db.inicializar_base_datos()
     
     # Leemos directamente del JSON específico de Guadalajara para jugar con los datos reales
-    resultados_apify = obtener_pisos_desde_json("pisos_guadalajara.json")
+    resultados_apify = obtener_pisos_desde_json("pisos_inversion.json")
     
     inmuebles_aceptados = []
     # ... resto de tu lógica de filtros y envío a Telegram
@@ -286,8 +286,8 @@ def ejecutar_proceso():
         item_id = str(item.get("id") or item.get("propertyCode") or "")
 
         # Comprobar en la BD si ya se notificó anteriormente para saltarlo
-        if gestor_db.ya_fue_visto(item_id):
-            continue
+        #if gestor_db.ya_fue_visto(item_id):
+        #    continue
             
         # Evaluar contra las reglas de negocio y filtros
         es_valido, motivo = procesar_inmueble(item)
