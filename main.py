@@ -135,6 +135,16 @@ def ejecutar_proceso():
     # Leemos directamente del JSON maestro de pisos
     resultados_apify = obtener_pisos_desde_json("pisos_inversion.json")
     
+    # Eliminar duplicados exactos que vengan dentro del propio JSON de entrada
+    vistos_en_json = []
+    resultados_unicos = []
+    for item in resultados_apify:
+        p_id = str(item.get("propertyCode") or item.get("id") or item.get("url", ""))
+        if p_id and p_id not in vistos_en_json:
+            vistos_en_json.append(p_id)
+            resultados_unicos.append(item)
+    resultados_apify = resultados_unicos
+
     inmuebles_aceptados = []
 
     print("\n" + "="*80)
@@ -191,5 +201,4 @@ def ejecutar_proceso():
 
 if __name__ == "__main__":
     ejecutar_proceso()
-    
 
