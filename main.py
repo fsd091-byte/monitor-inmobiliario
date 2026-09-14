@@ -78,7 +78,7 @@ def procesar_inmueble(item):
         return False, "Habitaciones insuficientes"
 
     # =========================================================================
-    # 2. FILTROS DE LOCALIZACIÓN Y TECTOS DE PRECIO ESPECÍFICOS POR ZONA
+    # 2. FILTROS DE LOCALIZACIÓN Y TEXTOS DE PRECIO ESPECÍFICOS POR ZONA
     # =========================================================================
     ubicacion_inmueble = f"{zona} {municipality} {province}".lower()
     
@@ -183,8 +183,9 @@ def ejecutar_proceso():
 
         print(f"🏠 ID: {item_id} | {precio:,.0f}€ | {superficie} m² | {habitaciones} habs | Planta: {planta} ({ascensor}) | Zona: {zona} | Link: {url}")
          
-        # 4. Enviar notificación por Telegram y guardar en BD de forma única
+        # 4. Enviar notificación por Telegram y guardar en BD (con depuración incorporada)
         try:
+            print(f"🔍 [DEBUG] Entrando a bloque try para notificar ID: {item_id}")
             enviar_alerta_piso(item)
             gestor_db.guardar_piso_visto(item_id, titulo, precio, zona)
             print("✓ Alerta enviada a tu Telegram con éxito.")
