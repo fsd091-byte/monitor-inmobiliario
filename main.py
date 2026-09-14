@@ -40,7 +40,6 @@ TARGET_LOCATIONS = [
 def quitar_tildes(texto):
     if not texto:
         return ""
-    # Convierte a minúsculas y elimina tildes/acentos
     return ''.join(
         c for c in unicodedata.normalize('NFD', str(texto))
         if unicodedata.category(c) != 'Mn'
@@ -50,7 +49,6 @@ def limpiar_total(texto):
     if not texto:
         return ""
     texto_base = quitar_tildes(str(texto))
-    # Elimina espacios, guiones y cualquier carácter que no sea letra o número
     return re.sub(r'[^a-z0-9]', '', texto_base)
 
 def procesar_inmueble(item):
@@ -78,16 +76,15 @@ def procesar_inmueble(item):
         return False, "Habitaciones insuficientes"
 
     # =========================================================================
-    # 2. FILTROS DE LOCALIZACIÓN Y TEXTOS DE PRECIO ESPECÍFICOS POR ZONA
+    # 2. FILTROS DE LOCALIZACIÓN
     # =========================================================================
     ubicacion_inmueble = f"{zona} {municipality} {province}".lower()
     
-    # Validar que pertenezca a las zonas objetivo generales
     if not any(loc in ubicacion_inmueble for loc in TARGET_LOCATIONS):
         return False, "Descartado: Fuera de las ubicaciones objetivo"
 
     # =========================================================================
-    # 5. EXTRACCIÓN Y FILTROS DE TEXTO (Términos prohibidos y zonas excluidas)
+    # 3. EXTRACCIÓN Y FILTROS DE TEXTO (Términos prohibidos)
     # =========================================================================
     textos_extraidos = []
     for v in item.values():
@@ -132,16 +129,15 @@ def ejecutar_proceso():
     # 1. Inicializar la base de datos y obtener inmuebles
     gestor_db.inicializar_base_datos()
     
-    # Leemos directamente del JSON maestro de pisos
     resultados_apify = obtener_pisos_desde_json("pisos_inversion.json")
     
-    # Eliminar duplicados exactos que vengan dentro del propio JSON de entrada
-    vistos_en_json = []
+    # Eliminar duplicados exactos dentro del JSON usando un set
+    vistos_en_json = set()
     resultados_unicos = []
     for item in resultados_apify:
         p_id = str(item.get("propertyCode") or item.get("id") or item.get("url", ""))
         if p_id and p_id not in vistos_en_json:
-            vistos_en_json.append(p_id)
+            vistos_en_json.add(p_id)
             resultados_unicos.append(item)
     resultados_apify = resultados_unicos
 
@@ -183,12 +179,10 @@ def ejecutar_proceso():
 
         print(f"🏠 ID: {item_id} | {precio:,.0f}€ | {superficie} m² | {habitaciones} habs | Planta: {planta} ({ascensor}) | Zona: {zona} | Link: {url}")
          
-        # 4. Enviar notificación por Telegram y guardar en BD (con depuración incorporada)
+        # 4. Enviar notificación por Telegram y guardar en BD de forma limpia
         try:
-            print(f"🔍 [DEBUG] Entrando a bloque try para notificar ID: {item_id}")
             enviar_alerta_piso(item)
             gestor_db.guardar_piso_visto(item_id, titulo, precio, zona)
-            print("✓ Alerta enviada a tu Telegram con éxito.")
             print(f"  └─ Registro guardado en BD: {item_id}")
         except Exception as e:
             print(f"⚠️ Error enviando notificación para ID {item_id}: {e}")
