@@ -54,7 +54,7 @@ def limpiar_total(texto):
     return re.sub(r'[^a-z0-9]', '', texto_base)
 
 def procesar_inmueble(item):
-    item_id = str(item.get('propertyCode') or item.get('id') or 'N/A')
+    item_id = str(item.get('propertyCode') or item.get('id') or item.get('url', 'N/A'))
     precio = item.get('price', 0)
     superficie = item.get('size', 0)
     habitaciones = int(item.get('rooms', 2))
@@ -79,49 +79,12 @@ def procesar_inmueble(item):
 
     # =========================================================================
     # 2. FILTROS DE LOCALIZACIÓN Y TECTOS DE PRECIO ESPECÍFICOS POR ZONA
-    # - Ávila: < 100.000 €
-    # - Guadalajara / Azuqueca: < 160.000 €
-    # - Zaragoza: < 140.000 €
     # =========================================================================
     ubicacion_inmueble = f"{zona} {municipality} {province}".lower()
     
-    # if any(loc in ubicacion_inmueble for loc in ["ávila", "avila"]):
-    #     if precio >= 100000:
-    #         return False, "Descartado: Ávila con precio >= 130.000€"
-    # elif any(loc in ubicacion_inmueble for loc in ["guadalajara", "azuqueca"]):
-    #     if precio >= 160000:
-    #         return False, "Descartado: Guadalajara con precio >= 170.000€"
-    # elif "zaragoza" in ubicacion_inmueble:
-    #     if precio >= 100000:
-    #         return False, "Descartado: Zaragoza con precio >= 140.000€"
-
     # Validar que pertenezca a las zonas objetivo generales
     if not any(loc in ubicacion_inmueble for loc in TARGET_LOCATIONS):
         return False, "Descartado: Fuera de las ubicaciones objetivo"
-
-    # =========================================================================
-    # 3. REGLAS DE HABITACIONES, PRECIO GENERAL Y BAÑOS
-    # - 2 habitaciones o menos: Máximo 150.000 €
-    # - 3 habitaciones o más: Hasta los 175.000 € (o el límite zonal menor)
-    # - Más de 2 habitaciones: Exigir mínimo 2 baños
-    # =========================================================================
-    # if habitaciones <= 2 and precio > 150000:
-    #     return False, "Descartado: <= 2 habitaciones y precio > 150.000€"
-
-    # if habitaciones > 2 and baños < 2:
-    #     return False, "Descartado: > 2 habitaciones pero menos de 2 baños"
-
-    # =========================================================================
-    # 4. FILTRO DE PLANTA Y ASCENSOR
-    # - Descartar bajos / semisótanos siempre
-    # - Sin ascensor: Solo se permite el primer piso
-    # =========================================================================
-    # if planta in ['bj', 'bajo', '0', 'semisótano', 'ss']:
-    #     return False, "Descartado: Planta baja / bajo no deseado"
-
-    # plantas_primer_piso = ['1', '1º', 'primero']
-    # if not tiene_ascensor and planta not in plantas_primer_piso:
-    #     return False, "Descartado: Sin ascensor y no es un primer piso"
 
     # =========================================================================
     # 5. EXTRACCIÓN Y FILTROS DE TEXTO (Términos prohibidos y zonas excluidas)
@@ -169,11 +132,10 @@ def ejecutar_proceso():
     # 1. Inicializar la base de datos y obtener inmuebles
     gestor_db.inicializar_base_datos()
     
-    # Leemos directamente del JSON específico de Guadalajara para jugar con los datos reales
+    # Leemos directamente del JSON maestro de pisos
     resultados_apify = obtener_pisos_desde_json("pisos_inversion.json")
     
     inmuebles_aceptados = []
-    # ... resto de tu lógica de filtros y envío a Telegram
 
     print("\n" + "="*80)
     print(" 📋 INMUEBLES SELECCIONADOS QUE CUMPLEN TODOS LOS CRITERIOS v2")
@@ -181,7 +143,11 @@ def ejecutar_proceso():
 
     for item in resultados_apify:
         
-        item_id = str(item.get("id") or item.get("propertyCode") or "")
+        # Extracción unificada y robusta del ID para evitar duplicidades
+        item_id = str(item.get("propertyCode") or item.get("id") or item.get("url", ""))
+
+        if not item_id or item_id == 'N/A':
+            continue
 
         # Comprobar en la BD si ya se notificó anteriormente para saltarlo
         if gestor_db.ya_fue_visto(item_id):
