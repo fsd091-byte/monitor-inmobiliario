@@ -134,18 +134,6 @@ def ejecutar_proceso():
     # Eliminar duplicados exactos dentro del JSON usando un set
     vistos_en_json = set()
     resultados_unicos = []
-    for item in resultados_apify:
-        p_id = str(item.get("propertyCode") or item.get("id") or item.get("url", ""))
-        if p_id and p_id not in vistos_en_json:
-            vistos_en_json.add(p_id)
-            resultados_unicos.append(item)
-    resultados_apify = resultados_unicos
-
-    inmuebles_aceptados = []
-
-    print("\n" + "="*80)
-    print(" 📋 INMUEBLES SELECCIONADOS QUE CUMPLEN TODOS LOS CRITERIOS v2")
-    print("="*80)
 
     for item in resultados_apify:
         
@@ -155,11 +143,11 @@ def ejecutar_proceso():
         if not item_id or item_id == 'N/A':
             continue
 
-        # 2. Comprobación crítica antes de todo: Si ya está en la BD, se descarta al instante
+        # 2. COMPROBACIÓN CRÍTICA PRIMERO: Si ya está en la BD, fuera al instante
         if gestor_db.ya_fue_visto(item_id):
             continue
             
-        # 3. Evaluar contra las reglas de negocio y filtros
+        # 3. SEGUNDO: Evaluar contra las reglas de negocio y filtros
         es_valido, motivo = procesar_inmueble(item)
         if not es_valido:
             continue
@@ -179,16 +167,13 @@ def ejecutar_proceso():
 
         print(f"🏠 ID: {item_id} | {precio:,.0f}€ | {superficie} m² | {habitaciones} habs | Planta: {planta} ({ascensor}) | Zona: {zona} | Link: {url}")
          
-        # 4. Guardar primero en BD para bloquearlo en caliente y luego notificar
+        # 4. Guardar en BD y notificar
         try:
             gestor_db.guardar_piso_visto(item_id, titulo, precio, zona)
             enviar_alerta_piso(item)
         except Exception as e:
             print(f"⚠️ Error procesando notificación o guardado para ID {item_id}: {e}")
 
-    print("="*80)
-    print(f" Total inmuebles nuevos notificados: {len(inmuebles_aceptados)}")
-    print("="*80 + "\n")
-
+    
 if __name__ == "__main__":
     ejecutar_proceso()
