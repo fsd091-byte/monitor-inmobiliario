@@ -35,6 +35,8 @@ def ya_fue_visto(id_anuncio):
         cursor = conexion.cursor()
         cursor.execute("SELECT 1 FROM pisos_vistos WHERE id_anuncio = ?", (id_anuncio,))
         resultado = cursor.fetchone()
+    
+    print(f"DEBUG DB -> ID {id_anuncio} ya_fue_visto: {resultado is not None}")
     return resultado is not None
 
 def guardar_piso_visto(id_anuncio, titulo, precio, zona):
