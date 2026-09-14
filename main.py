@@ -179,13 +179,12 @@ def ejecutar_proceso():
 
         print(f"🏠 ID: {item_id} | {precio:,.0f}€ | {superficie} m² | {habitaciones} habs | Planta: {planta} ({ascensor}) | Zona: {zona} | Link: {url}")
          
-        # 4. Enviar notificación por Telegram y guardar en BD de forma limpia
+        # 4. Guardar primero en BD para bloquearlo en caliente y luego notificar
         try:
-            enviar_alerta_piso(item)
             gestor_db.guardar_piso_visto(item_id, titulo, precio, zona)
-            print(f"  └─ Registro guardado en BD: {item_id}")
+            enviar_alerta_piso(item)
         except Exception as e:
-            print(f"⚠️ Error enviando notificación para ID {item_id}: {e}")
+            print(f"⚠️ Error procesando notificación o guardado para ID {item_id}: {e}")
 
     print("="*80)
     print(f" Total inmuebles nuevos notificados: {len(inmuebles_aceptados)}")
