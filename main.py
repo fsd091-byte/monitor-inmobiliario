@@ -239,8 +239,8 @@ def ejecutar_proceso():
         item_id = str(item.get("id") or item.get("propertyCode") or "")
 
         # Comprobar en la BD si ya se notificó anteriormente para saltarlo
-        #if gestor_db.ya_fue_visto(item_id):
-        #    continue
+        if gestor_db.ya_fue_visto(item_id):
+            continue
             
         # Evaluar contra las reglas de negocio y filtros
         es_valido, motivo = procesar_inmueble(item)
