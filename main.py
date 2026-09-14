@@ -153,21 +153,19 @@ def ejecutar_proceso():
 
     for item in resultados_apify:
         
-        # Extracción unificada y robusta del ID para evitar duplicidades
+        # 1. Extracción unificada y robusta del ID
         item_id = str(item.get("propertyCode") or item.get("id") or item.get("url", ""))
 
         if not item_id or item_id == 'N/A':
             continue
 
-        # Comprobar en la BD si ya se notificó anteriormente para saltarlo
+        # 2. Comprobación crítica antes de todo: Si ya está en la BD, se descarta al instante
         if gestor_db.ya_fue_visto(item_id):
             continue
             
-        # Evaluar contra las reglas de negocio y filtros
+        # 3. Evaluar contra las reglas de negocio y filtros
         es_valido, motivo = procesar_inmueble(item)
         if not es_valido:
-            # Opcional: puedes descomentar la línea de abajo si quieres ver en consola por qué se descarta cada uno
-            # print(f"❌ Descartado ID {item_id}: {motivo}")
             continue
         
         print(f"✅ ¡APROBADO! ID {item_id}")
@@ -183,10 +181,9 @@ def ejecutar_proceso():
         titulo = item.get("title", "Sin título")
         url = item.get("url") or item.get("link") or "Sin URL"
 
-        # Imprime 1 sola línea por piso aceptado en la consola
         print(f"🏠 ID: {item_id} | {precio:,.0f}€ | {superficie} m² | {habitaciones} habs | Planta: {planta} ({ascensor}) | Zona: {zona} | Link: {url}")
          
-        # 2. Enviar notificación por Telegram y guardar en BD
+        # 4. Enviar notificación por Telegram y guardar en BD de forma única
         try:
             enviar_alerta_piso(item)
             gestor_db.guardar_piso_visto(item_id, titulo, precio, zona)
@@ -201,4 +198,3 @@ def ejecutar_proceso():
 
 if __name__ == "__main__":
     ejecutar_proceso()
-
