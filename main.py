@@ -85,15 +85,15 @@ def procesar_inmueble(item):
     # =========================================================================
     ubicacion_inmueble = f"{zona} {municipality} {province}".lower()
     
-    if any(loc in ubicacion_inmueble for loc in ["ávila", "avila"]):
-        if precio >= 100000:
-            return False, "Descartado: Ávila con precio >= 130.000€"
-    elif any(loc in ubicacion_inmueble for loc in ["guadalajara", "azuqueca"]):
-        if precio >= 160000:
-            return False, "Descartado: Guadalajara con precio >= 170.000€"
-    elif "zaragoza" in ubicacion_inmueble:
-        if precio >= 100000:
-            return False, "Descartado: Zaragoza con precio >= 140.000€"
+    # if any(loc in ubicacion_inmueble for loc in ["ávila", "avila"]):
+    #     if precio >= 100000:
+    #         return False, "Descartado: Ávila con precio >= 130.000€"
+    # elif any(loc in ubicacion_inmueble for loc in ["guadalajara", "azuqueca"]):
+    #     if precio >= 160000:
+    #         return False, "Descartado: Guadalajara con precio >= 170.000€"
+    # elif "zaragoza" in ubicacion_inmueble:
+    #     if precio >= 100000:
+    #         return False, "Descartado: Zaragoza con precio >= 140.000€"
 
     # Validar que pertenezca a las zonas objetivo generales
     if not any(loc in ubicacion_inmueble for loc in TARGET_LOCATIONS):
@@ -105,23 +105,23 @@ def procesar_inmueble(item):
     # - 3 habitaciones o más: Hasta los 175.000 € (o el límite zonal menor)
     # - Más de 2 habitaciones: Exigir mínimo 2 baños
     # =========================================================================
-    if habitaciones <= 2 and precio > 150000:
-        return False, "Descartado: <= 2 habitaciones y precio > 150.000€"
+    # if habitaciones <= 2 and precio > 150000:
+    #     return False, "Descartado: <= 2 habitaciones y precio > 150.000€"
 
-    if habitaciones > 2 and baños < 2:
-        return False, "Descartado: > 2 habitaciones pero menos de 2 baños"
+    # if habitaciones > 2 and baños < 2:
+    #     return False, "Descartado: > 2 habitaciones pero menos de 2 baños"
 
     # =========================================================================
     # 4. FILTRO DE PLANTA Y ASCENSOR
     # - Descartar bajos / semisótanos siempre
     # - Sin ascensor: Solo se permite el primer piso
     # =========================================================================
-    if planta in ['bj', 'bajo', '0', 'semisótano', 'ss']:
-        return False, "Descartado: Planta baja / bajo no deseado"
+    # if planta in ['bj', 'bajo', '0', 'semisótano', 'ss']:
+    #     return False, "Descartado: Planta baja / bajo no deseado"
 
-    plantas_primer_piso = ['1', '1º', 'primero']
-    if not tiene_ascensor and planta not in plantas_primer_piso:
-        return False, "Descartado: Sin ascensor y no es un primer piso"
+    # plantas_primer_piso = ['1', '1º', 'primero']
+    # if not tiene_ascensor and planta not in plantas_primer_piso:
+    #     return False, "Descartado: Sin ascensor y no es un primer piso"
 
     # =========================================================================
     # 5. EXTRACCIÓN Y FILTROS DE TEXTO (Términos prohibidos y zonas excluidas)
@@ -156,7 +156,7 @@ def procesar_inmueble(item):
         if termino in texto_completo:
             return False, f"Término prohibido estricto: {termino}"
 
-    zonas_prohibidas = ["san cristobal", "vallecas", "puente de vallecas", "villaverde", "entrevias"]
+    zonas_prohibidas = ["san cristobal", "vallecas", "puente de vallecas", "entrevias"]
     if any(z in texto_completo for z in zonas_prohibidas): 
         return False, "Descartado: Zona prohibida detectada en el texto"
 
