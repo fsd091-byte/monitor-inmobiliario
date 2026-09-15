@@ -13,6 +13,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      - name: Guardar base de datos actualizada en el repositorio
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Actualizar base de datos de pisos vistos [skip ci]"
+          file_pattern: "inmuebles.db"
+          # Esto obliga a incluir archivos nuevos aunque no estuvieran trackeados antes
+          add_options: '--force'
+          
       - name: Descargar repositorio
         uses: actions/checkout@v3
 
