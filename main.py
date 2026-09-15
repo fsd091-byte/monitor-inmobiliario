@@ -179,12 +179,9 @@ def ejecutar_proceso():
 
         print(f"🏠 ID: {item_id} | {precio:,.0f}€ | {superficie} m² | {habitaciones} habs | Planta: {planta} ({ascensor}) | Zona: {zona} | Link: {url}")
          
-        # 4. Guardar en BD primero y después enviar la alerta
-        try:
-            gestor_db.guardar_piso_visto(item_id, titulo, precio, zona)
-            enviar_alerta_piso(item)
-        except Exception as e:
-            print(f"⚠️ Error procesando notificación o guardado para ID {item_id}: {e}")
+        # 4. Guardar en BD primero y después enviar la alerta (Sin try/except para ver el error exacto si falla)
+        gestor_db.guardar_piso_visto(item_id, titulo, precio, zona)
+        enviar_alerta_piso(item)
 
     print("="*80)
     print(f" Total inmuebles nuevos notificados: {len(inmuebles_aceptados)}")
