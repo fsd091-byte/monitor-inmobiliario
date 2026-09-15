@@ -1,11 +1,17 @@
+import os
 import sqlite3
 from datetime import datetime
 
-NOMBRE_DB = "inmuebles.db"
+# --- SOLUCIÓN: Ruta absoluta basada en la ubicación del script ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+NOMBRE_DB = os.path.join(BASE_DIR, "inmuebles.db")
+# -----------------------------------------------------------------
 
 def obtener_conexion():
     """Crea y devuelve la conexión a la base de datos."""
     return sqlite3.connect(NOMBRE_DB)
+
+# Resto de tus funciones de gestor_db...
 
 def inicializar_base_datos():
     """
