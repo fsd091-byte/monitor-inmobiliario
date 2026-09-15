@@ -29,6 +29,7 @@ def inicializar_base_datos():
     conexion.close()
     print("✓ Base de datos conectada e inicializada correctamente.")
 
+
 def ya_fue_visto(id_anuncio):
     """Comprueba si un anuncio ya está registrado en la base de datos."""
     conexion = obtener_conexion()
