@@ -2,9 +2,10 @@ import os
 import sqlite3
 from datetime import datetime
 
-# --- SOLUCIÓN: Ruta absoluta basada en la ubicación del script ---
+# Forzamos la ruta absoluta exacta de la carpeta de trabajo
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 NOMBRE_DB = os.path.join(BASE_DIR, "inmuebles.db")
+
 # -----------------------------------------------------------------
 
 def obtener_conexion():
