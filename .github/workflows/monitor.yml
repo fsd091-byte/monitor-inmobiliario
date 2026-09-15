@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # 1. Permiso necesario para que GitHub pueda modificar y subir la BD
+  contents: write  # Permiso indispensable para que la acción pueda escribir en el repo
 
 jobs:
   ejecutar-monitor:
@@ -34,9 +34,7 @@ jobs:
         run: python main.py
 
       - name: Guardar base de datos actualizada en el repositorio
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add inmuebles.db
-          git diff --quiet && git diff --staged --quiet || git commit -m "Actualizar base de datos de pisos vistos [skip ci]"
-          git push
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Actualizar base de datos de pisos vistos [skip ci]"
+          file_pattern: "inmuebles.db"
