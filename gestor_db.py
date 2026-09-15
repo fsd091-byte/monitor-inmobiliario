@@ -7,9 +7,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 NOMBRE_DB = os.path.join(BASE_DIR, "inmuebles.db")
 
 def obtener_conexion():
-
-    """Fuerza la conexión a la ruta absoluta exacta de tu proyecto."""
-    ruta_exacta = r"C:\Users\fernando.sanchez\Documents\IA Fernando\inmuebles.db"
+    """Usa la ruta absoluta en tu Windows local, y ruta relativa en Linux (GitHub Actions)."""
+    if os.name == 'nt':  # Si estás en Windows (tu PC)
+        ruta_exacta = r"C:\Users\fernando.sanchez\Documents\IA Fernando\inmuebles.db"
+    else:  # Si estás en Linux (GitHub Actions)
+        ruta_exacta = os.path.join(os.path.dirname(os.path.abspath(__file__)), "inmuebles.db")
+        
     return sqlite3.connect(ruta_exacta)
     
 
