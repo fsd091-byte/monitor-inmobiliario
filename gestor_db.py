@@ -45,16 +45,37 @@ def ya_fue_visto(id_anuncio):
     print(f"DEBUG DB -> ID {id_anuncio} ya_fue_visto: {resultado is not None}")
     return resultado is not None
 
+
 def guardar_piso_visto(id_anuncio, titulo, precio, zona):
     """
-    Registra un anuncio en la base de datos para no volver a notificarlo.
+    Registra un anuncio en la base de datos de forma persistente.
     """
     fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with obtener_conexion() as conexion:
-        cursor = conexion.cursor()
-        cursor.execute("""
-            INSERT OR IGNORE INTO pisos_vistos (id_anuncio, titulo, precio, zona, fecha_guardado)
-            VALUES (?, ?, ?, ?, ?)
-        """, (id_anuncio, titulo, precio, zona, fecha_actual))
-        conexion.commit()
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    
+    cursor.execute("""
+        INSERT OR IGNORE INTO pisos_vistos (id_anuncio, titulo, precio, zona, fecha_guardado)
+        VALUES (?, ?, ?, ?, ?)
+    """, (str(id_anuncio), titulo, precio, zona, fecha_actual))
+    
+    conexion.commit()
+    conexion.close()
     print(f"  └─ Registro guardado en BD: {id_anuncio}")
+
+def ya_fue_visto(id_anuncio):
+    """
+    Comprueba si un anuncio ya está registrado en la base de datos.
+    """
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    
+    cursor.execute("SELECT 1 FROM pisos_vistos WHERE id_anuncio = ?", (str(id_anuncio),))
+    resultado = cursor.fetchone()
+    
+    conexion.close()
+    
+    visto = resultado is not None
+    print(f"DEBUG DB -> ID {id_anuncio} ya_fue_visto: {visto}")
+    return visto
+    
