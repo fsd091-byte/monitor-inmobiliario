@@ -7,10 +7,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 NOMBRE_DB = os.path.join(BASE_DIR, "inmuebles.db")
 
 def obtener_conexion():
-    """Crea y devuelve la conexión usando una ruta absoluta robusta."""
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    ruta_db = os.path.join(base_dir, "inmuebles.db")
-    return sqlite3.connect(ruta_db)
+
+    """Fuerza la conexión a la ruta absoluta exacta de tu proyecto."""
+    ruta_exacta = r"C:\Users\fernando.sanchez\Documents\IA Fernando\inmuebles.db"
+    return sqlite3.connect(ruta_exacta)
+    
+
 
 def inicializar_base_datos():
     """Crea la base de datos y la tabla 'pisos_vistos' si no existen."""
