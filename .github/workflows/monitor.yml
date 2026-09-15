@@ -33,9 +33,16 @@ jobs:
           APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
         run: python main.py
 
+      - name: Comprobar si la BD existe realmente antes del commit
+        run: |
+          echo "Buscando ficheros .db en el workspace:"
+          find . -name "*.db"
+          ls -la
+
       - name: Guardar base de datos actualizada en el repositorio
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Actualizar base de datos de pisos vistos [skip ci]"
           file_pattern: "inmuebles.db"
           add_options: '--force'
+          skip_ci: true
