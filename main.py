@@ -126,6 +126,11 @@ def procesar_inmueble(item):
 
 def ejecutar_proceso():
 
+    import os
+    
+    print("📍 Directorio actual de ejecución:", os.getcwd())
+    print("📍 Ruta absoluta de la BD que usa gestor_db:", gestor_db.NOMBRE_DB)
+
     # 1. Inicializar la base de datos y obtener inmuebles
     gestor_db.inicializar_base_datos()
     
