@@ -7,8 +7,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 NOMBRE_DB = os.path.join(BASE_DIR, "inmuebles.db")
 
 def obtener_conexion():
-    """Crea y devuelve la conexión a la base de datos con ruta absoluta."""
-    return sqlite3.connect(NOMBRE_DB)
+    """Crea y devuelve la conexión usando una ruta absoluta robusta."""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    ruta_db = os.path.join(base_dir, "inmuebles.db")
+    return sqlite3.connect(ruta_db)
 
 def inicializar_base_datos():
     """Crea la base de datos y la tabla 'pisos_vistos' si no existen."""
