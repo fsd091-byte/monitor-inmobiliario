@@ -14,7 +14,9 @@ jobs:
 
     steps:
       - name: Descargar repositorio
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
 
       - name: Configurar Python
         uses: actions/setup-python@v4
@@ -39,10 +41,16 @@ jobs:
           find . -name "*.db"
           ls -la
 
+      - name: Forzar seguimiento de la base de datos en Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add inmuebles.db
+          git status
+
       - name: Guardar base de datos actualizada en el repositorio
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Actualizar base de datos de pisos vistos [skip ci]"
           file_pattern: "inmuebles.db"
-          add_options: '--force'
           skip_ci: true
